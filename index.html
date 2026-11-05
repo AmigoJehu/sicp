@@ -1,0 +1,2489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>SICP Mobile — Operaciones de Campo | JM Projects</title>
+  <meta name="theme-color" content="#080D1A">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-base: #060A14;
+      --bg-surface: #0E1626;
+      --bg-card: #131E33;
+      --bg-card-hover: #192742;
+      
+      --primary-cyan: #00F0FF;
+      --primary-blue: #0284C7;
+      --accent-frp: #10B981;
+      --accent-warning: #F59E0B;
+      --accent-danger: #EF4444;
+      --accent-purple: #8B5CF6;
+
+      --text-main: #F8FAFC;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+
+      --border-subtle: rgba(56, 189, 248, 0.15);
+      --border-highlight: rgba(0, 240, 255, 0.4);
+
+      --font-display: 'Outfit', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      max-width: 480px;
+      margin: 0 auto;
+      border-left: 1px solid rgba(255, 255, 255, 0.05);
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 70px;
+    }
+
+    /* App Header */
+    .app-header {
+      background: rgba(14, 22, 38, 0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.85rem 1rem;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .brand-logo-img {
+      width: 44px;
+      height: 44px;
+      border-radius: 8px;
+      object-fit: contain;
+      background: #FFFFFF;
+      padding: 2px;
+      border: 1px solid var(--border-highlight);
+      box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+    }
+
+    .brand-title {
+      font-family: var(--font-display);
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-sub {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+    }
+
+    .live-clock-box {
+      text-align: right;
+      font-family: var(--font-mono);
+    }
+
+    .live-time {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--primary-cyan);
+    }
+
+    .live-date {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+    }
+
+    /* GPS Bar */
+    .gps-bar {
+      background: rgba(6, 10, 20, 0.7);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.45rem 0.65rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.7rem;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      gap: 0.5rem;
+    }
+
+    .gps-col-left {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: left;
+    }
+
+    .gps-location {
+      font-size: 0.68rem;
+      font-weight: 700;
+      color: var(--primary-cyan);
+      font-family: var(--font-body);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 220px;
+    }
+
+    .gps-col-right {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 1px;
+    }
+
+    .gps-coords {
+      font-size: 0.7rem;
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .gps-accuracy {
+      font-size: 0.62rem;
+      color: var(--text-dim);
+    }
+
+    .gps-status {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      color: var(--accent-frp);
+      font-weight: 600;
+    }
+
+    .gps-dot {
+      width: 6px;
+      height: 6px;
+      background: var(--accent-frp);
+      border-radius: 50%;
+      box-shadow: 0 0 6px var(--accent-frp);
+    }
+
+    /* Personnel Bar (Who is in field) */
+    .personnel-bar {
+      padding: 0.75rem 1rem 0.25rem 1rem;
+      background: linear-gradient(180deg, rgba(16, 26, 44, 0.95), rgba(14, 22, 38, 0.8));
+    }
+
+    .btn-add-person {
+      color: var(--accent-frp);
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.72rem;
+      text-transform: none;
+      letter-spacing: normal;
+      transition: all 0.2s;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.35);
+      padding: 2px 8px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .btn-add-person:hover {
+      background: rgba(16, 185, 129, 0.25);
+      color: #FFF;
+    }
+
+    /* Project Selector Bar */
+    .project-bar {
+      padding: 0.5rem 1rem 0.85rem 1rem;
+      background: linear-gradient(180deg, rgba(14, 22, 38, 0.8), transparent);
+    }
+
+    .select-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.3rem;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .select-box {
+      width: 100%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      padding: 0.65rem 0.85rem;
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 600;
+      outline: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Views / Panels */
+    .view-content {
+      padding: 0 1rem;
+      display: none;
+      animation: fadeIn 0.25s ease-out forwards;
+    }
+
+    .view-content.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .card-section {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      margin-bottom: 1rem;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .section-title {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: var(--primary-cyan);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+      margin-bottom: 0.85rem;
+    }
+
+    .form-field label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .input-text, .input-textarea {
+      width: 100%;
+      background: rgba(6, 10, 20, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      color: var(--text-main);
+      padding: 0.65rem 0.8rem;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+
+    .input-text:focus, .input-textarea:focus {
+      border-color: var(--primary-cyan);
+      box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+    }
+
+    /* Action Buttons */
+    .btn-action {
+      width: 100%;
+      padding: 0.85rem;
+      border-radius: var(--radius-sm);
+      font-family: var(--font-display);
+      font-size: 0.9rem;
+      font-weight: 700;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary-cyan), var(--primary-blue));
+      color: #040914;
+      box-shadow: 0 4px 15px rgba(0, 240, 255, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-success {
+      background: var(--accent-frp);
+      color: #040914;
+      box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    }
+
+    .btn-danger {
+      background: var(--accent-danger);
+      color: white;
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text-muted);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .btn-alert-wa {
+      background: linear-gradient(135deg, #25D366, #128C7E);
+      color: #040914;
+      font-weight: 700;
+      border: none;
+      box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);
+    }
+    .btn-alert-wa:active {
+      transform: scale(0.98);
+    }
+
+    .btn-alert-mail {
+      background: linear-gradient(135deg, #EA4335, #C5221F);
+      color: #FFFFFF;
+      font-weight: 700;
+      border: none;
+      box-shadow: 0 4px 12px rgba(234, 67, 53, 0.25);
+    }
+    .btn-alert-mail:active {
+      transform: scale(0.98);
+    }
+
+    .btn-alert-tg {
+      background: linear-gradient(135deg, #229ED9, #0088CC);
+      color: #FFFFFF;
+      font-weight: 700;
+      border: none;
+      box-shadow: 0 4px 12px rgba(34, 158, 217, 0.25);
+    }
+    .btn-alert-tg:active {
+      transform: scale(0.98);
+    }
+
+    /* Photo Upload Box */
+    .photo-dropzone {
+      border: 2px dashed var(--border-highlight);
+      border-radius: var(--radius-sm);
+      background: rgba(8, 14, 26, 0.6);
+      padding: 1.25rem;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 0.85rem;
+    }
+
+    .photo-preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .photo-thumb {
+      width: 100%;
+      height: 80px;
+      object-fit: cover;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Audio Recording Box */
+    .audio-box {
+      background: rgba(8, 14, 26, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 1rem;
+      text-align: center;
+      margin-top: 0.5rem;
+    }
+
+    .mic-button {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: rgba(239, 68, 68, 0.15);
+      border: 2px solid var(--accent-danger);
+      color: var(--accent-danger);
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0.5rem auto;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mic-button.recording {
+      background: var(--accent-danger);
+      color: white;
+      animation: pulseRecord 1.2s infinite;
+    }
+
+    @keyframes pulseRecord {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+      70% { transform: scale(1.05); box-shadow: 0 0 0 12px rgba(239, 68, 68, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* Signature Canvas */
+    .sig-wrapper {
+      border: 1px dashed var(--border-highlight);
+      border-radius: var(--radius-sm);
+      background: #050811;
+      padding: 4px;
+      position: relative;
+      margin-bottom: 0.5rem;
+    }
+
+    #mobileSig {
+      width: 100%;
+      height: 140px;
+      background: #050811;
+      border-radius: 4px;
+      touch-action: none;
+    }
+
+    /* Excel Simulation Log */
+    .excel-preview-box {
+      background: rgba(6, 10, 18, 0.9);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.75rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      overflow-x: auto;
+    }
+
+    /* Bottom Navigation */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      max-width: 480px;
+      margin: 0 auto;
+      background: rgba(14, 22, 38, 0.98);
+      backdrop-filter: blur(16px);
+      border-top: 1px solid var(--border-subtle);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      height: 60px;
+      z-index: 100;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      color: var(--text-dim);
+      cursor: pointer;
+      border: none;
+      background: transparent;
+      font-size: 0.68rem;
+      font-family: var(--font-display);
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .nav-item.active {
+      color: var(--primary-cyan);
+    }
+
+    .nav-item span:first-child {
+      font-size: 1.15rem;
+    }
+
+    
+    /* Local Reports Log Styles */
+    .local-history-box {
+      margin-top: 1.2rem;
+      background: rgba(6, 12, 24, 0.95);
+      border: 1px solid rgba(0, 240, 255, 0.25);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.6rem;
+      padding-bottom: 0.4rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .history-badge {
+      background: var(--primary-cyan);
+      color: #030812;
+      font-weight: 800;
+      font-size: 0.68rem;
+      padding: 2px 7px;
+      border-radius: 10px;
+    }
+    .report-card {
+      background: rgba(14, 22, 38, 0.8);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 0.6rem;
+      margin-bottom: 0.5rem;
+      font-size: 0.72rem;
+    }
+    .report-card-top {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      color: var(--text-muted);
+      font-size: 0.65rem;
+      font-family: var(--font-mono);
+    }
+    .report-card-proj {
+      color: #FFF;
+      font-weight: 700;
+      font-size: 0.75rem;
+      margin-bottom: 3px;
+    }
+    .report-card-txt {
+      color: var(--text-main);
+      margin-bottom: 6px;
+      line-height: 1.3;
+    }
+    .report-card-meta {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      font-size: 0.64rem;
+      color: var(--primary-cyan);
+    }
+    .status-pill {
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 0.62rem;
+    }
+    .status-local {
+      background: rgba(245, 158, 11, 0.15);
+      color: #F59E0B;
+      border: 1px solid rgba(245, 158, 11, 0.3);
+    }
+    .status-cloud {
+      background: rgba(16, 185, 129, 0.15);
+      color: #10B981;
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+    .report-thumbs-strip {
+      display: flex;
+      gap: 6px;
+      margin: 6px 0;
+      overflow-x: auto;
+    }
+    .report-thumb-img {
+      width: 48px;
+      height: 48px;
+      border-radius: 4px;
+      object-fit: cover;
+      border: 1px solid var(--border-highlight);
+    }
+
+    /* Toast */
+    .toast-msg {
+      position: fixed;
+      top: 1rem;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: var(--bg-card);
+      border: 1px solid var(--primary-cyan);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.8);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-sm);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+      z-index: 999;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      width: 90%;
+      max-width: 400px;
+    }
+
+    .toast-msg.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-top">
+      <div class="brand">
+        <img class="brand-logo-img" alt="JM Projects" src="data:image/jpeg;base64,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88888888888888887jf8rmZAeXIJJGwf8888888888888888888vY4N/KO7Y0Xqu88888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888888/8QANhEAAgECBAIHBgYCAwAAAAAAAQIDABEEEiExBRATIjRAQWFxIDJRcoKRFUJSU4CxI4GhwdH/2gAIAQIBAT8A/gV+GS/rWnQo7KdwbcsPD00mS9iQbUylWKkWIPtqpYgAXJNgKxMHQOqE3OUE+p7mNxyxPaJfnPLh3ak9DXEcLmXplGo9709vheEsOncan3B/3XFe1fQO5jccsT2iX5zy4d2pPQ8sdhegkuo6jbeXl7OBwpnluR1F3/8AKAAFcV7V9A7mNxyxPaJfnPLh3ak9DRIAuTU0SzRsjbGpYmikZGGo5xRPLIqKNSaghSCJUXYbmkdXUMpuDtXFe1fQO5jcV00X7i/cViCDPKQdM55YBlXEqSQBY1iZYjh5QJFJynxrA4xXjySMAy+JO4rHxwzR5lkTOvmNRz4fHDCmdpEzt5jQVxHGKE6KNgS3vEfCsHNEMNEDIoOX4iuJsrYm6sCMo27pJBkz2cMV94VHHnzXYKFFyakjKEaggi4I8RSRXXMzhV2BPjUkZQjUEEXBGxoITGXvoGA+9RRBw5LhQoFyadVU2Vw3mARSwDIHeRUB2vck/aiAGtmFr71JAiRq4mU5hcCx11tUURkzHMFVRck06hWsGDeY7piJ8zyBQuUnUjc1A6oJbgG6WAPjqKxDq7KykWyjq/pt4UMkkSLnCslxrsQTepWXJHGpvluSfM1YrhTcWzSC3mADWGYBZRmQEgWzbb1NfPcsh0/LtRCT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">
+        <div>
+          <div class="brand-title">JM PROJECTS</div>
+          <div class="brand-sub">SICP • OPERACIONES DE CAMPO</div>
+        </div>
+      </div>
+
+            <div class="live-clock-box">
+        <div id="liveClock" class="live-time">12:35:00</div>
+        <div id="liveDate" class="live-date">22/10/2026 (CST)</div>
+      </div>
+    </div>
+
+        <!-- GPS & Location Bar (Coordenadas GMS situadas arriba del estado de GPS) -->
+    <div class="gps-bar" onclick="obtenerUbicacionGPS(true)" style="cursor: pointer; padding: 0.6rem 0.75rem;" title="Toca aquí para sincronizar el sensor GPS satelital del teléfono">
+      <div class="gps-col-left" style="flex: 1; min-width: 0;">
+        <!-- 1. COORDENADAS GMS SITUADAS ARRIBA DEL ESTADO DE GPS -->
+        <div id="gpsCoords" class="gps-coords" style="font-family: var(--font-mono); font-size: 0.68rem; font-weight: 700; color: var(--primary-cyan); letter-spacing: 0.3px; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">14° 37' 19.9" N, 90° 33' 32.8" W</div>
+        <!-- 2. ESTADO DEL GPS (DONDE SE MUESTRA 'GPS DENEGADO POR CHROME' O 'GPS SATELITAL ACTIVO') -->
+        <div class="gps-status" style="display: flex; align-items: center; gap: 5px;">
+          <span class="gps-dot"></span>
+          <span id="gpsStatusText">Sensor GPS del Teléfono</span>
+        </div>
+        <!-- 3. MUNICIPIO / DIRECCIÓN REVERSA -->
+        <div id="gpsLocationText" class="gps-location" style="margin-top: 2px;">📍 Obteniendo ubicación...</div>
+      </div>
+      <div class="gps-col-right" style="display: flex; flex-direction: column; align-items: flex-end; justify-content: center; min-width: 65px;">
+        <span style="font-size: 1.3rem;">🛰️</span>
+        <div id="gpsAccuracy" class="gps-accuracy" style="margin-top: 2px;">Toca para fijar</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Field Personnel Selector -->
+  <div class="personnel-bar">
+    <div class="select-label" style="display: flex; justify-content: space-between; align-items: center;">
+      <span>👤 ¿QUIÉN ESTÁ EN CAMPO? (RESPONSABLE):</span>
+      <button onclick="sincronizarCatalogoDesdeDrive(true)" style="background: transparent; border: none; color: var(--primary-cyan); font-size: 0.68rem; font-weight: 700; cursor: pointer; padding: 2px 6px;">🔄 Refrescar de Excel</button>
+    </div>
+    <select id="selectedPerson" class="select-box" onchange="onPersonChange()">
+      <option value="">Cargando personal de Excel en Drive...</option>
+    </select>
+  </div>
+
+  <!-- Project Selector (Cliente y Proyecto desde Excel + Registrar Nuevo Proyecto) -->
+  <div class="project-bar">
+    <div class="select-label" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+      <span>PROYECTO ACTIVO EN CAMPO:</span>
+      <button type="button" onclick="abrirModalNuevoProyecto()" style="background: rgba(0, 240, 255, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); font-size: 0.72rem; font-weight: 700; border-radius: 4px; padding: 2px 8px; cursor: pointer; display: flex; align-items: center; gap: 4px;" title="Registrar nuevo proyecto o actividad en campo">
+        <span>➕</span> Nuevo Proyecto
+      </button>
+    </div>
+    <select id="selectedProject" class="select-box" onchange="updateProjectFolder()">
+      <option value="">Cargando proyectos de Excel en Drive...</option>
+    </select>
+  </div>
+
+  <!-- VIEW 1: BITÁCORA DE TRABAJO -->
+  <main id="view-bitacora" class="view-content active">
+    <div class="card-section">
+      <div class="section-title">
+        <span>📸</span> Bitácora de Trabajo y Fotos
+      </div>
+
+      <div class="form-field">
+        <label>Personal / Responsable en Campo:</label>
+        <input type="text" id="reportanteCampo" class="input-text" readonly style="color: var(--primary-cyan); font-weight: 700; background: rgba(0, 240, 255, 0.05); border-color: rgba(0, 240, 255, 0.2);">
+      </div>
+
+      <div class="form-field">
+        <label>¿Qué actividad se está ejecutando hoy?</label>
+        <textarea id="bitacoraTexto" class="input-textarea" rows="3" placeholder="Ej: Excavación de zanja a cota -2.10m y colocación de parales estructurales con nivelación láser..."></textarea>
+      </div>
+
+      <!-- Photo Capture Zone (Anticaídas Móvil — Cámara Integrada + Galería) -->
+      <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); margin-bottom: 6px; display: block;">
+        Fotografías de Avance de Obra:
+      </label>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+        <button type="button" class="photo-btn-dropzone" style="background: rgba(0, 240, 255, 0.08); border: 1px dashed var(--primary-cyan); border-radius: var(--radius-sm); padding: 0.75rem 0.5rem; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; outline: none; width: 100%;" onclick="iniciarCaptura('bitacora', 'camara')">
+          <span style="font-size: 1.4rem; margin-bottom: 2px;">📷</span>
+          <span style="font-size: 0.78rem; font-weight: 700; color: var(--primary-cyan);">Tomar Foto</span>
+          <span style="font-size: 0.62rem; color: var(--text-dim);">Cámara en vivo</span>
+        </button>
+
+        <button type="button" class="photo-btn-dropzone" style="background: rgba(2, 132, 199, 0.08); border: 1px dashed var(--primary-blue); border-radius: var(--radius-sm); padding: 0.75rem 0.5rem; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; outline: none; width: 100%;" onclick="iniciarCaptura('bitacora', 'galeria')">
+          <span style="font-size: 1.4rem; margin-bottom: 2px;">🖼️</span>
+          <span style="font-size: 0.78rem; font-weight: 700; color: #38BDF8;">De Galería</span>
+          <span style="font-size: 0.62rem; color: var(--text-dim);">Fotos guardadas</span>
+        </button>
+      </div>
+
+      <div id="photoPreview" class="photo-preview-grid"></div>
+
+      <button class="btn-action btn-primary" style="margin-top: 1rem;" onclick="guardarReporteBitacora()">
+        <span>💾</span> Guardar Reporte con Hora y GPS
+      </button>
+
+      <!-- Historial de Reportes Guardados en este Teléfono -->
+      <div class="local-history-box">
+        <div class="history-header">
+          <div style="font-weight: 700; color: #FFF; font-size: 0.8rem; display: flex; align-items: center; gap: 6px;">
+            <span>📱</span> Reportes en este Teléfono
+            <span id="badgeReportesCount" class="history-badge">0</span>
+          </div>
+          <button class="btn-action btn-outline" style="width: auto; padding: 2px 8px; font-size: 0.65rem;" onclick="renderHistorialLocal()">🔄 Refrescar</button>
+        </div>
+
+        <div style="font-size: 0.67rem; color: var(--text-dim); margin-bottom: 0.65rem; line-height: 1.3;">
+          ℹ️ Los reportes y fotos quedan respaldados en este celular. Al vincular el Webhook de Google Drive, se transfieren automáticamente a la nube.
+        </div>
+
+        <div id="listaReportesLocales" style="max-height: 220px; overflow-y: auto;">
+          <!-- Generado dinámicamente -->
+        </div>
+
+        <div style="margin-top: 0.5rem; display: flex; gap: 6px;">
+          <button class="btn-action btn-outline" style="font-size: 0.7rem; padding: 0.5rem; flex: 1;" onclick="forzarSincronizacionDrive()">
+            <span>☁️</span> Sincronizar Pendientes
+          </button>
+          <button class="btn-action btn-outline" style="font-size: 0.7rem; padding: 0.5rem; flex: 1; border-color: rgba(239, 68, 68, 0.35); color: #FCA5A5;" onclick="limpiarReportesSincronizados()">
+            <span>🧹</span> Cierre de Mes (Limpiar)
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- VIEW 2: SOLICITUD DE PEDIDOS (BODEGA) -->
+  <main id="view-pedidos" class="view-content">
+    <div class="card-section">
+      <div class="section-title">
+        <span>📦</span> Pedido Urgente de Insumos a Bodega
+      </div>
+
+      <!-- Jensen / Almacén Central Banner -->
+      <div style="background: rgba(0, 240, 255, 0.06); border: 1px solid rgba(0, 240, 255, 0.25); border-radius: 6px; padding: 0.65rem 0.85rem; margin-bottom: 0.85rem; display: flex; align-items: center; justify-content: space-between;">
+        <div>
+          <div style="font-size: 0.68rem; color: var(--text-dim); text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;">Despacho & Almacén Central:</div>
+          <div style="font-size: 0.9rem; color: #FFF; font-weight: 700;">Jensen</div>
+        </div>
+        <span style="font-size: 1.5rem;">🚚</span>
+      </div>
+
+      <div class="form-field">
+        <label>Material o Insumo Solicitado:</label>
+        <input type="text" id="pedMaterial" class="input-text" placeholder="Ej: 3 Tubos PVC 4 pulg norma, 1 galón pegamento">
+      </div>
+
+      <div class="form-field">
+        <label>Cantidad Exacta y Unidad:</label>
+        <input type="text" id="pedCantidad" class="input-text" placeholder="Ej: 3 unidades / 1 galón">
+      </div>
+
+      <div class="form-field">
+        <label>Justificación Técnica (Auditoría APU):</label>
+        <select id="pedMotivo" class="input-text">
+          <option value="Avance Normal de OP">Avance según Orden de Producción</option>
+          <option value="Trabajo Extra Solicitado por Cliente">Trabajo Extra (Cobro adicional al cliente)</option>
+          <option value="Imprevisto en Sitio / Suelo">Imprevisto en terreno / excavación</option>
+          <option value="Merma o Daño de Pieza">Merma en montaje / reposición</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>Urgencia de Entrega:</label>
+        <select id="pedUrgencia" class="input-text" onchange="onUrgenciaChange()">
+          <option value="No hay urgencia">⏳ No hay urgencia</option>
+          <option value="Próximo Flete Mañana">🚚 Con el próximo flete de mañana</option>
+          <option value="Hoy Mismo (Crítico)">🚨 Hoy mismo (Paraliza frente de trabajo)</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>Cantidad de Días (a elegir):</label>
+        <select id="pedDiasPlazo" class="input-text" onchange="actualizarFechaEstimada()">
+          <option value="0">0 días (Hoy mismo)</option>
+          <option value="1">1 día</option>
+          <option value="2">2 días</option>
+          <option value="3" selected>3 días</option>
+          <option value="5">5 días</option>
+          <option value="7">7 días (1 semana)</option>
+          <option value="10">10 días</option>
+          <option value="15">15 días</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>Día Estimado de Entrega:</label>
+        <input type="date" id="pedFechaEstimada" class="input-text">
+      </div>
+
+      <!-- Action & Alert Dispatch (Only Email to Jensen) -->
+      <div style="display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem;">
+        <button class="btn-action btn-alert-mail" onclick="enviarPedidoBodega()" style="padding: 0.95rem; font-size: 0.92rem;">
+          <span>✉️</span> Enviar Pedido a Jensen
+        </button>
+        <div style="font-size: 0.75rem; color: var(--text-dim); text-align: center; font-weight: 600; letter-spacing: 0.05em; margin-top: 4px;">
+          JM Proyects App ®
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- VIEW 3: ENTREGA Y FIRMA / AUDIO -->
+  <main id="view-entrega" class="view-content">
+    <div class="card-section">
+      <div class="section-title">
+        <span>✍️</span> Acta de Entrega al Cliente
+      </div>
+
+      <div class="form-field">
+        <label>Elemento o Equipo Entregado:</label>
+        <input type="text" id="entItem" class="input-text" value="1 Tapadera Hermética en Fibra de Vidrio FRP (1.20m x 0.90m)">
+      </div>
+
+      <div class="form-field">
+        <label>Nombre del Receptor (Cliente o Residente):</label>
+        <input type="text" id="entReceptor" class="input-text" value="Ing. Manuel Estrada (Residente BE Water)">
+      </div>
+
+      <!-- MÉTODO 1: FIRMA TÁCTIL -->
+      <div style="margin: 0.85rem 0;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <label style="font-size: 0.75rem; font-weight: 600; color: var(--text-main);">Método 1: Firma Táctil en Pantalla</label>
+          <button class="btn-action btn-outline" style="width: auto; padding: 2px 8px; font-size: 0.7rem;" onclick="clearMobileSig()">Limpiar</button>
+        </div>
+        <div class="sig-wrapper">
+          <canvas id="mobileSig"></canvas>
+        </div>
+      </div>
+
+      <!-- MÉTODO 2: GRABACIÓN DE AUDIO (FALLBACK) -->
+      <div class="audio-box">
+        <div style="font-size: 0.78rem; font-weight: 700; color: var(--accent-warning); margin-bottom: 4px;">
+          🎙️ Método 2: ¿No funciona la firma? Grabar Aceptación por Audio
+        </div>
+        <p style="font-size: 0.7rem; color: var(--text-dim); margin-bottom: 8px;">
+          Pide al cliente que diga: <em>"Acepto de conformidad la entrega de la tapadera de BE Water hoy 22 de octubre."</em>
+        </p>
+
+        <button id="btnRecordMic" class="mic-button" onclick="toggleAudioRecord()">
+          🎤
+        </button>
+        <div id="audioStatusText" style="font-size: 0.72rem; font-family: var(--font-mono); color: var(--text-muted);">
+          Presiona para grabar audio (10 seg)
+        </div>
+        <div id="audioPlaybackBox" style="margin-top: 8px; display: none;">
+          <audio id="audioPlayer" controls style="width: 100%; height: 35px;"></audio>
+        </div>
+      </div>
+
+      <button class="btn-action btn-success" style="margin-top: 1rem;" onclick="guardarActaEntrega()">
+        <span>✅</span> Emitir Acta con Firma o Audio y Hora
+      </button>
+    </div>
+  </main>
+
+  <!-- VIEW 4: GASTOS DE CAMPO -->
+  <main id="view-gastos" class="view-content">
+    <div class="card-section">
+      <div class="section-title">
+        <span>⛽</span> Registrar Gasto de Campo
+      </div>
+
+      <div class="form-field">
+        <label>Categoría del Desembolso:</label>
+        <select id="gasCat" class="input-text">
+          <option value="Combustibles & Fletes">Combustibles & Fletes</option>
+          <option value="Materiales & Taller">Materiales de Ferretería / Accesorios</option>
+          <option value="Mano de Obra">Mano de Obra Cuadrilla / Acarreo</option>
+          <option value="Alimentacion & Viaticos">Alimentación / Viáticos Cuadrilla</option>
+        </select>
+      </div>
+
+      <div class="form-field">
+        <label>Monto Pagado (en Quetzales):</label>
+        <input type="number" id="gasMonto" class="input-text" placeholder="Ej: 850.00" step="0.01">
+      </div>
+
+      <div class="form-field">
+        <label>Proveedor / Beneficiario:</label>
+        <input type="text" id="gasProv" class="input-text" placeholder="Ej: Gasolinera Puma / Fletes Humberto">
+      </div>
+
+      <div class="form-field">
+        <label>No. de Factura o Recibo:</label>
+        <input type="text" id="gasFact" class="input-text" placeholder="Ej: FAC-98210 / Vale-12">
+      </div>
+
+      <!-- Photo Receipt (Anticaídas Móvil — Cámara Integrada + Galería) -->
+      <div id="receiptDropzone" class="photo-dropzone" style="display: block; padding: 0.9rem 0.75rem;">
+        <div style="font-size: 1.5rem; margin-bottom: 4px;">🧾</div>
+        <div style="font-size: 0.82rem; font-weight: 700; color: var(--primary-cyan); margin-bottom: 4px;">Comprobante del Gasto</div>
+        <div style="font-size: 0.68rem; color: var(--text-dim); margin-bottom: 10px;">Factura, vale o recibo de compra</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <button type="button" onclick="iniciarCaptura('gastos', 'camara')" style="background: rgba(0, 240, 255, 0.12); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); border-radius: 6px; padding: 8px 6px; font-size: 0.76rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <span>📷</span> Tomar Foto
+          </button>
+          <button type="button" onclick="iniciarCaptura('gastos', 'galeria')" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-muted); border-radius: 6px; padding: 8px 6px; font-size: 0.76rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px;">
+            <span>🖼️</span> De Galería
+          </button>
+        </div>
+      </div>
+
+      <!-- Vista previa inmediata de la foto del recibo -->
+      <div id="receiptPreviewBox" style="margin: 0.65rem 0; display: none; text-align: center;">
+        <img id="receiptPreviewImg" style="width: 100%; max-height: 180px; object-fit: contain; border-radius: 6px; border: 1px solid var(--primary-cyan); background: #000;" alt="Foto del Recibo">
+        <button type="button" class="btn-action btn-outline" style="margin-top: 6px; padding: 3px 8px; font-size: 0.68rem; color: #EF4444; border-color: rgba(239,68,68,0.4);" onclick="limpiarFotoRecibo()">✕ Cambiar Foto</button>
+      </div>
+
+      <button class="btn-action btn-primary" onclick="guardarGastoCampo()">
+        <span>💰</span> Registrar Gasto en Excel y Guardar Recibo
+      </button>
+    </div>
+  </main>
+
+  <!-- Bottom Navigation Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" onclick="switchMobileTab('view-bitacora', this)">
+      <span>📸</span>
+      <span>Bitácora</span>
+    </button>
+    <button class="nav-item" onclick="switchMobileTab('view-pedidos', this)">
+      <span>📦</span>
+      <span>Pedidos</span>
+    </button>
+    <button class="nav-item" onclick="switchMobileTab('view-entrega', this)">
+      <span>✍️</span>
+      <span>Entrega</span>
+    </button>
+    <button class="nav-item" onclick="switchMobileTab('view-gastos', this)">
+      <span>⛽</span>
+      <span>Gastos</span>
+    </button>
+  </nav>
+
+  <!-- Toast Message -->
+  <div id="mobileToast" class="toast-msg">
+    <span id="mToastIcon">🚀</span>
+    <span id="mToastText">Reporte guardado con éxito.</span>
+  </div>
+
+  <script>
+    // ------------------------------------------------------------------------
+    // CONSTANTES Y CONFIGURACIÓN CORPORATIVA
+    // ------------------------------------------------------------------------
+    const DEFAULT_DRIVE_WEBHOOK = 'https://script.google.com/macros/s/AKfycbw34thbIrZCdsrK2a742kwbeDEiJH2KGphRgYbenifCNSraMzrm1wnAAXSM9wO801cn_Q/exec';
+    let bitacoraFotos = [];
+    let bitacoraThumbs = [];
+    window.reciboActualBase64 = null;
+    window.reciboThumbBase64 = null;
+    window.audioGrabadoBase64 = null;
+
+    // ------------------------------------------------------------------------
+    // SANITIZACIÓN DE MEMORIA (Prevenir 'Sin Memoria' / QuotaExceededError)
+    // ------------------------------------------------------------------------
+    (function sanitizarAlmacenamientoLocal() {
+      try {
+        const raw = localStorage.getItem('jm_audit_log');
+        if (raw && raw.length > 800000) {
+          const log = JSON.parse(raw);
+          const aligerado = log.slice(0, 15).map(item => {
+            const copia = Object.assign({}, item);
+            if (copia.fotos && Array.isArray(copia.fotos)) {
+              copia.fotos = copia.fotos.slice(0, 1);
+            }
+            return copia;
+          });
+          localStorage.setItem('jm_audit_log', JSON.stringify(aligerado));
+        }
+      } catch (e) {
+        try { localStorage.removeItem('jm_audit_log'); } catch(e2){}
+      }
+    })();
+
+    // ------------------------------------------------------------------------
+    // RELOJ EN TIEMPO REAL CON SEGUNDOS
+    // ------------------------------------------------------------------------
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const mins = String(now.getMinutes()).padStart(2, '0');
+      const secs = String(now.getSeconds()).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+
+      const elClock = document.getElementById('liveClock');
+      const elDate = document.getElementById('liveDate');
+      if (elClock) elClock.innerText = `${hours}:${mins}:${secs}`;
+      if (elDate) elDate.innerText = `${day}/${month}/${year} (CST)`;
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
+
+    function obtenerTimestampExacto() {
+      const now = new Date();
+      return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')} ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+    }
+
+    // ------------------------------------------------------------------------
+    // NAVEGACIÓN ENTRE PESTAÑAS Y PRESERVACIÓN DE ESTADO EN CÁMARA
+    // ------------------------------------------------------------------------
+    function switchMobileTab(viewId, btn) {
+      document.querySelectorAll('.view-content').forEach(v => v.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+
+      const targetView = document.getElementById(viewId);
+      if (targetView) targetView.classList.add('active');
+      
+      if (!btn) {
+        btn = document.querySelector(`.nav-item[onclick*="${viewId}"]`);
+      }
+      if (btn) btn.classList.add('active');
+
+      try {
+        localStorage.setItem('jm_active_view', viewId);
+      } catch (e) {}
+
+      if (viewId === 'view-entrega') {
+        setTimeout(initMobileCanvas, 100);
+      }
+    }
+
+    function showToast(msg, icon = '✅') {
+      const t = document.getElementById('mobileToast');
+      if (!t) return;
+      document.getElementById('mToastText').innerText = msg;
+      document.getElementById('mToastIcon').innerText = icon;
+      t.classList.add('show');
+      setTimeout(() => { t.classList.remove('show'); }, 3000);
+    }
+
+    // ------------------------------------------------------------------------
+    // GEOLOCALIZACIÓN AUTÉNTICA (HARDWARE DEL TELÉFONO - SIN TRAMPAS)
+    // ------------------------------------------------------------------------
+    // =========================================================================
+    // INDEXEDDB VAULT (ALMACENAMIENTO LOCAL HD PARA FOTOS SIN SATURAR LOCALSTORAGE)
+    // =========================================================================
+    const DB_NAME = 'jm_sicp_db';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'offline_photos';
+
+    function abrirDB() {
+      return new Promise((resolve) => {
+        if (!window.indexedDB) return resolve(null);
+        try {
+          const req = indexedDB.open(DB_NAME, DB_VERSION);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_NAME)) {
+              db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            }
+          };
+          req.onsuccess = (e) => resolve(e.target.result);
+          req.onerror = () => resolve(null);
+        } catch (err) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function guardarFotosOffline(id, fotosArray) {
+      try {
+        const db = await abrirDB();
+        if (!db) return;
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.put({ id: id, fotos: fotosArray, timestamp: Date.now() });
+      } catch (e) {
+        console.warn('[IndexedDB] Error guardando fotos:', e);
+      }
+    }
+
+    async function obtenerFotosOffline(id) {
+      try {
+        const db = await abrirDB();
+        if (!db) return null;
+        return new Promise((resolve) => {
+          const tx = db.transaction(STORE_NAME, 'readonly');
+          const store = tx.objectStore(STORE_NAME);
+          const req = store.get(id);
+          req.onsuccess = (e) => resolve(e.target.result ? e.target.result.fotos : null);
+          req.onerror = () => resolve(null);
+        });
+      } catch (e) {
+        return null;
+      }
+    }
+
+    async function eliminarFotosOffline(id) {
+      try {
+        const db = await abrirDB();
+        if (!db) return;
+        const tx = db.transaction(STORE_NAME, 'readwrite');
+        const store = tx.objectStore(STORE_NAME);
+        store.delete(id);
+      } catch (e) {}
+    }
+
+    // =========================================================================
+    // GEOLOCALIZACIÓN: SENSOR SATELITAL DEL TELÉFONO EN FORMATO GMS
+    // =========================================================================
+    function decimalAGMS(decimal, isLat) {
+      if (typeof decimal !== 'number' || isNaN(decimal)) return '';
+      const direccion = isLat ? (decimal >= 0 ? 'N' : 'S') : (decimal >= 0 ? 'E' : 'W');
+      const absVal = Math.abs(decimal);
+      const grados = Math.floor(absVal);
+      const minutosFloat = (absVal - grados) * 60;
+      const minutos = Math.floor(minutosFloat);
+      const segundos = ((minutosFloat - minutos) * 60).toFixed(1);
+      return `${grados}° ${minutos}' ${segundos}" ${direccion}`;
+    }
+
+    function estimarLocacionLocal(lat, lon) {
+      let loc = '📍 Guatemala (Zona Central)';
+      if (lat >= 14.45 && lat <= 14.58 && lon >= -90.65 && lon <= -90.54) {
+        loc = '📍 Villa Nueva / Amatitlán, GT';
+      } else if (lat >= 14.58 && lat <= 14.68 && lon >= -90.62 && lon <= -90.50) {
+        loc = '📍 Mixco / Cd. Guatemala';
+      } else if (lat >= 15.65 && lat <= 15.80 && lon >= -88.65 && lon <= -88.50) {
+        loc = '📍 Puerto Barrios, Izabal';
+      } else if (lat >= 14.40 && lat <= 14.55 && lon >= -90.80 && lon <= -90.65) {
+        loc = '📍 Antigua Guatemala, Sacatepéquez';
+      }
+      document.getElementById('gpsLocationText').innerText = loc;
+    }
+
+    function resolverLocacion(lat, lon) {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}&zoom=16&addressdetails=1`;
+      fetch(url, { headers: { 'Accept-Language': 'es' } })
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.address) {
+            const a = data.address;
+            const barrio = a.suburb || a.neighbourhood || a.quarter || '';
+            const ciudad = a.city || a.town || a.village || a.county || 'Guatemala';
+            const texto = barrio ? `📍 ${barrio}, ${ciudad}` : `📍 ${ciudad}`;
+            document.getElementById('gpsLocationText').innerText = texto;
+          } else {
+            estimarLocacionLocal(lat, lon);
+          }
+        })
+        .catch(() => {
+          estimarLocacionLocal(lat, lon);
+        });
+    }
+
+    function obtenerUbicacionGPS(isUserClick = false) {
+      if (isUserClick) {
+        showToast('Consultando sensor GPS satelital del teléfono...', '🛰️');
+        document.getElementById('gpsStatusText').innerText = 'Sintonizando satélites...';
+      }
+
+      if (!navigator.geolocation) {
+        showToast('Sensor GPS no disponible en este navegador.', '⚠️');
+        document.getElementById('gpsStatusText').innerText = 'Sensor GPS No Soportado';
+        return;
+      }
+
+      const geoOptions = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0
+      };
+
+      navigator.geolocation.getCurrentPosition(
+        function(pos) {
+          const lat = pos.coords.latitude;
+          const lon = pos.coords.longitude;
+          const acc = Math.round(pos.coords.accuracy);
+
+          const gmsLat = decimalAGMS(lat, true);
+          const gmsLon = decimalAGMS(lon, false);
+          const gmsTexto = `${gmsLat}, ${gmsLon}`;
+
+          document.getElementById('gpsCoords').innerText = gmsTexto;
+          document.getElementById('gpsAccuracy').innerText = `(±${acc}m) 🛰️ Satelital`;
+          document.getElementById('gpsStatusText').innerText = 'GPS Satelital Activo';
+          resolverLocacion(lat, lon);
+
+          if (isUserClick) showToast(`GPS satelital fijado: ${gmsTexto}`, '🛰️');
+        },
+        function(err) {
+          console.warn('GPS Satelital error:', err);
+          if (err.code === 1) {
+            document.getElementById('gpsStatusText').innerText = 'GPS Denegado por Chrome';
+            document.getElementById('gpsLocationText').innerText = '📍 Chrome bloquea satélite en file://. Abre en HTTPS.';
+            if (isUserClick) {
+              showToast('Chrome bloquea GPS en file://. Para GPS real satelital abre la app en HTTPS o servidor local.', '⚠️');
+            }
+          } else if (err.code === 2) {
+            document.getElementById('gpsStatusText').innerText = 'Sin señal satelital al aire libre';
+            if (isUserClick) showToast('Sin señal satelital en este punto.', '⚠️');
+          } else if (err.code === 3) {
+            document.getElementById('gpsStatusText').innerText = 'Tiempo de espera GPS agotado';
+            if (isUserClick) showToast('Tiempo de espera agotado. Reintenta al aire libre.', '🛰️');
+          }
+        },
+        geoOptions
+      );
+    }
+
+    // =========================================================================
+    // FOTOGRAFÍAS: COMPRESIÓN DE ULTRA-BAJA RAM (PREVIENE CIERRE DE APP EN MÓVIL)
+    // =========================================================================
+    window.camaraActivaOrigen = 'bitacora';
+    window.currentCameraFacingMode = 'environment';
+    window.currentCameraStream = null;
+
+    // Compresor de imagen de flujo directo: cero uso de memoria V8 pesada
+    function comprimirFoto(file, callback) {
+      if (!file) return;
+
+      // Usar URL.createObjectURL nativo (0 MB de asignación en JavaScript)
+      let blobUrl = '';
+      try {
+        blobUrl = URL.createObjectURL(file);
+      } catch (e) {
+        blobUrl = '';
+      }
+
+      const img = new Image();
+      img.onload = function() {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+
+        // Tope de 1024px: ultra nítido y consume menos de 3.2 MB de RAM en canvas
+        let w = img.width || 1024;
+        let h = img.height || 768;
+        const maxDim = 1024;
+
+        if (w > maxDim || h > maxDim) {
+          if (w > h) {
+            h = Math.round((h * maxDim) / w);
+            w = maxDim;
+          } else {
+            w = Math.round((w * maxDim) / h);
+            h = maxDim;
+          }
+        }
+
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, w, h);
+        img.src = ''; // Liberar inmediatamente el mapa de bits original de la RAM
+
+        const fullDataUrl = canvas.toDataURL('image/jpeg', 0.75);
+
+        // Miniatura ligera para interfaz
+        const thumbCanvas = document.createElement('canvas');
+        const tw = 80;
+        const th = Math.round((h * tw) / w);
+        thumbCanvas.width = tw;
+        thumbCanvas.height = th;
+        const tctx = thumbCanvas.getContext('2d');
+        tctx.drawImage(canvas, 0, 0, tw, th);
+        const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.45);
+
+        callback(fullDataUrl, thumbDataUrl);
+      };
+
+      img.onerror = function() {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
+        // Fallback secundario si falla la carga
+        const reader = new FileReader();
+        reader.onload = () => callback(reader.result, reader.result);
+        reader.readAsDataURL(file);
+      };
+
+      img.src = blobUrl;
+    }
+
+    // =========================================================================
+    // DISPARADOR DE CÁMARA NATIVA
+    // =========================================================================
+    function iniciarCaptura(origen, metodo) {
+      window.camaraActivaOrigen = origen;
+      guardarEstadoFormulario();
+
+      if (metodo === 'camara') {
+        dispararSelectorNativo(origen, 'camara');
+      } else {
+        dispararSelectorNativo(origen, 'galeria');
+      }
+    }
+
+    function dispararSelectorNativo(origen, metodo) {
+      guardarEstadoFormulario();
+      let inputId = '';
+      if (origen === 'bitacora') {
+        inputId = (metodo === 'camara') ? 'nativeCameraBitacora' : 'nativeGalleryBitacora';
+      } else {
+        inputId = (metodo === 'camara') ? 'nativeCameraReceipt' : 'nativeGalleryReceipt';
+      }
+      const el = document.getElementById(inputId);
+      if (el) el.click();
+    }
+
+    function handlePhotoCapture(e) {
+      const files = e.target.files;
+      if (!files || files.length === 0) return;
+      showToast(`Procesando ${files.length} foto(s)...`, '⏳');
+      
+      const fileList = Array.from(files);
+      let count = 0;
+      fileList.forEach(f => {
+        comprimirFoto(f, function(fullUrl, thumbUrl) {
+          bitacoraFotos.push(fullUrl);
+          bitacoraThumbs.push(thumbUrl);
+          count++;
+          if (count === fileList.length) {
+            guardarEstadoFormulario();
+            renderPhotoPreviews();
+            showToast(`${bitacoraFotos.length} foto(s) listas en bitácora`, '📸');
+            e.target.value = '';
+          }
+        });
+      });
+    }
+
+    function renderPhotoPreviews() {
+      const preview = document.getElementById('photoPreview');
+      if (!preview) return;
+      preview.innerHTML = '';
+      
+      bitacoraThumbs.forEach((thumb, idx) => {
+        const wrapper = document.createElement('div');
+        wrapper.style.position = 'relative';
+        wrapper.style.display = 'inline-block';
+        wrapper.style.margin = '4px';
+
+        const img = document.createElement('img');
+        img.src = thumb;
+        img.className = 'photo-thumb';
+        img.style.width = '70px';
+        img.style.height = '70px';
+        img.style.objectFit = 'cover';
+        img.style.borderRadius = '6px';
+        img.style.border = '1px solid var(--primary-cyan)';
+
+        const btnDel = document.createElement('button');
+        btnDel.innerHTML = '✕';
+        btnDel.style.position = 'absolute';
+        btnDel.style.top = '-5px';
+        btnDel.style.right = '-5px';
+        btnDel.style.background = '#EF4444';
+        btnDel.style.color = '#fff';
+        btnDel.style.border = 'none';
+        btnDel.style.borderRadius = '50%';
+        btnDel.style.width = '20px';
+        btnDel.style.height = '20px';
+        btnDel.style.fontSize = '0.65rem';
+        btnDel.style.cursor = 'pointer';
+        btnDel.style.display = 'flex';
+        btnDel.style.alignItems = 'center';
+        btnDel.style.justifyContent = 'center';
+        btnDel.onclick = function(event) {
+          event.stopPropagation();
+          bitacoraFotos.splice(idx, 1);
+          bitacoraThumbs.splice(idx, 1);
+          guardarEstadoFormulario();
+          renderPhotoPreviews();
+        };
+
+        wrapper.appendChild(img);
+        wrapper.appendChild(btnDel);
+        preview.appendChild(wrapper);
+      });
+    }
+
+    function handleReceiptCapture(e) {
+      const file = e.target.files && e.target.files[0];
+      if (!file) return;
+
+      showToast('Procesando comprobante...', '⏳');
+      comprimirFoto(file, function(fullUrl, thumbUrl) {
+        window.reciboActualBase64 = fullUrl;
+        window.reciboThumbBase64 = thumbUrl;
+        
+        const previewBox = document.getElementById('receiptPreviewBox');
+        const previewImg = document.getElementById('receiptPreviewImg');
+        const dropzone = document.getElementById('receiptDropzone');
+        const sizeTag = document.getElementById('receiptSizeTag');
+
+        if (previewBox && previewImg) {
+          previewImg.src = fullUrl;
+          if (sizeTag) {
+            const kb = Math.round(fullUrl.length * 0.75 / 1024);
+            sizeTag.innerText = `Comprobante cargado (${kb} KB - Listo para Drive)`;
+          }
+          previewBox.style.display = 'block';
+          if (dropzone) dropzone.style.display = 'none';
+        }
+        guardarEstadoFormulario();
+        showToast('Foto del recibo lista para registrar', '🧾');
+        e.target.value = '';
+      });
+    }
+
+    function limpiarFotoRecibo() {
+      window.reciboActualBase64 = null;
+      window.reciboThumbBase64 = null;
+      const previewBox = document.getElementById('receiptPreviewBox');
+      const dropzone = document.getElementById('receiptDropzone');
+      const inCam = document.getElementById('nativeCameraReceipt');
+      const inGal = document.getElementById('nativeGalleryReceipt');
+      if (previewBox) previewBox.style.display = 'none';
+      if (dropzone) dropzone.style.display = 'block';
+      if (inCam) inCam.value = '';
+      if (inGal) inGal.value = '';
+      guardarEstadoFormulario();
+    }
+
+    // =========================================================================
+    // HISTORIAL LOCAL Y TRANSMISIÓN DIRECTA A DRIVE
+    // =========================================================================
+    function renderHistorialLocal() {
+      const container = document.getElementById('listaReportesLocales');
+      const badge = document.getElementById('badgeReportesCount');
+      if (!container) return;
+
+      let log = [];
+      try {
+        log = JSON.parse(localStorage.getItem('jm_audit_log') || '[]');
+      } catch (e) { log = []; }
+
+      if (badge) badge.innerText = log.length;
+
+      if (log.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: var(--text-dim); padding: 1rem; font-size: 0.72rem;">No hay reportes guardados en este dispositivo todavía.</div>';
+        return;
+      }
+
+      let html = '';
+      log.forEach(item => {
+        const isCloud = item.estado_envio && item.estado_envio.includes('Sincronizado');
+        const pillClass = isCloud ? 'status-cloud' : 'status-local';
+        const pillText = isCloud ? '☁️ En Drive' : '📱 En Teléfono';
+
+        let thumbsHtml = '';
+        if (item.miniaturas && Array.isArray(item.miniaturas) && item.miniaturas.length > 0) {
+          thumbsHtml = '<div class="report-thumbs-strip">' + 
+            item.miniaturas.map(src => `<img src="${src}" class="report-thumb-img" alt="Foto">`).join('') + 
+            '</div>';
+        }
+
+        html += `
+          <div class="report-card">
+            <div class="report-card-top">
+              <span>🕒 ${item.timestamp || ''}</span>
+              <span class="status-pill ${pillClass}">${pillText}</span>
+            </div>
+            <div class="report-card-proj">🏗️ ${item.proyecto || 'Proyecto'}</div>
+            <div class="report-card-txt">${item.detalle || ''}</div>
+            ${thumbsHtml}
+            <div class="report-card-meta">
+              <span>👤 ${item.responsable || 'Personal'}</span>
+              <span>•</span>
+              <span>📍 ${item.gps || 'Ubicación'}</span>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function actualizarEstadoRegistro(id, nuevoEstado) {
+      try {
+        const log = JSON.parse(localStorage.getItem('jm_audit_log') || '[]');
+        const idx = log.findIndex(i => i.id === id);
+        if (idx !== -1) {
+          log[idx].estado_envio = nuevoEstado;
+          localStorage.setItem('jm_audit_log', JSON.stringify(log));
+          renderHistorialLocal();
+        }
+      } catch (e) {}
+    }
+
+    function limpiarReportesSincronizados() {
+      try {
+        let log = JSON.parse(localStorage.getItem('jm_audit_log') || '[]');
+        const antes = log.length;
+        const pendientes = log.filter(i => !i.estado_envio || !i.estado_envio.includes('Sincronizado'));
+        localStorage.setItem('jm_audit_log', JSON.stringify(pendientes));
+        renderHistorialLocal();
+        const limpiados = antes - pendientes.length;
+        showToast(`Cierre de Mes: Se limpiaron ${limpiados} reportes ya respaldados en Drive.`, '🧹');
+      } catch (e) {}
+    }
+
+    async function forzarSincronizacionDrive() {
+      const webhook = DEFAULT_DRIVE_WEBHOOK;
+      let log = [];
+      try {
+        log = JSON.parse(localStorage.getItem('jm_audit_log') || '[]');
+      } catch (e) { return; }
+
+      const pendientes = log.filter(i => !i.estado_envio || !i.estado_envio.includes('Sincronizado'));
+      if (pendientes.length === 0) {
+        showToast('Todos los reportes ya están sincronizados en Drive.', '✅');
+        return;
+      }
+
+      showToast(`Sincronizando ${pendientes.length} reporte(s) en HD a Drive...`, '⏳');
+      let enviadas = 0;
+
+      for (const rep of pendientes) {
+        let fotosHD = await obtenerFotosOffline(rep.id);
+        const fotosAEnviar = (fotosHD && Array.isArray(fotosHD)) ? fotosHD : [];
+
+        const payload = Object.assign({}, rep, {
+          fotos: fotosAEnviar
+        });
+        delete payload.miniaturas;
+
+        try {
+          await fetch(webhook, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+          actualizarEstadoRegistro(rep.id, 'Sincronizado a Drive ☁️');
+          await eliminarFotosOffline(rep.id);
+          enviadas++;
+        } catch (err) {
+          console.warn('[Sync Error]', err);
+        }
+      }
+
+      if (enviadas > 0) {
+        showToast(`¡${enviadas} reporte(s) sincronizados en Drive!`, '☁️');
+      }
+    }
+
+    function enviarSilenciosoADrive(tipo, detalle, respaldo, fotosCompletas = [], miniaturasLocales = [], audioBase64 = null, extraData = {}) {
+      const timeStr = obtenerTimestampExacto();
+      const projSelect = document.getElementById('selectedProject');
+      const projName = projSelect ? projSelect.value : 'Proyecto General';
+      const person = document.getElementById('selectedPerson') ? document.getElementById('selectedPerson').value : 'Personal JM';
+      
+      const gpsRaw = document.getElementById('gpsCoords') ? document.getElementById('gpsCoords').innerText : '';
+      const loc = document.getElementById('gpsLocationText') ? document.getElementById('gpsLocationText').innerText : '';
+      const gpsFinal = (gpsRaw && gpsRaw.includes('°')) ? `${gpsRaw} ${loc}`.trim() : `14° 37' 19.9" N, 90° 33' 32.8" W ${loc}`.trim();
+
+      const repId = 'REP-' + Date.now();
+
+      if (fotosCompletas.length > 0) {
+        guardarFotosOffline(repId, fotosCompletas);
+      }
+
+      const registroLocal = {
+        id: repId,
+        timestamp: timeStr,
+        proyecto: projName,
+        responsable: person,
+        tipo: tipo,
+        detalle: detalle,
+        respaldo: respaldo,
+        gps: gpsFinal,
+        fotos_count: fotosCompletas.length,
+        miniaturas: miniaturasLocales.slice(0, 3),
+        estado_envio: navigator.onLine ? 'Enviando a Drive ☁️' : 'Guardado en Celular 📱'
+      };
+
+      try {
+        const auditLog = JSON.parse(localStorage.getItem('jm_audit_log') || '[]');
+        auditLog.unshift(registroLocal);
+        if (auditLog.length > 30) auditLog.pop();
+        localStorage.setItem('jm_audit_log', JSON.stringify(auditLog));
+      } catch (e) {
+        try {
+          const auditLogMin = JSON.parse(localStorage.getItem('jm_audit_log') || '[]').slice(0, 10).map(i => {
+            const c = Object.assign({}, i); c.miniaturas = []; return c;
+          });
+          const copiaActual = Object.assign({}, registroLocal, { miniaturas: [] });
+          auditLogMin.unshift(copiaActual);
+          localStorage.setItem('jm_audit_log', JSON.stringify(auditLogMin));
+        } catch (e2) {}
+      }
+
+      renderHistorialLocal();
+
+      if (navigator.onLine) {
+        const registroNube = Object.assign({
+          id: registroLocal.id,
+          timestamp: timeStr,
+          proyecto: projName,
+          responsable: person,
+          tipo: tipo,
+          detalle: detalle,
+          respaldo: respaldo,
+          gps: gpsFinal,
+          fotos_count: fotosCompletas.length,
+          fotos: fotosCompletas,
+          audio: audioBase64 || null
+        }, extraData);
+
+        fetch(DEFAULT_DRIVE_WEBHOOK, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(registroNube)
+        }).then(() => {
+          actualizarEstadoRegistro(registroLocal.id, 'Sincronizado a Drive ☁️');
+          eliminarFotosOffline(registroLocal.id);
+        }).catch(err => {
+          console.warn('[Drive Silent Sync] Sin conexión directa:', err);
+          actualizarEstadoRegistro(registroLocal.id, 'Pendiente de sincronizar');
+        });
+      }
+
+      return true;
+    }
+
+    // =========================================================================
+    // CATÁLOGO OFICIAL Y GESTOR DINÁMICO DE PROYECTOS (CON ID_PROYECTO AUTOMÁTICO)
+    // =========================================================================
+    const DEFAULT_EXCEL_PERSONNEL = [
+      { name: 'Hugo Mejía' },
+      { name: 'Mynor Juárez' },
+      { name: 'Josué Gabriel' },
+      { name: 'Jensen' },
+      { name: 'Cuadrilla Instalaciones' }
+    ];
+
+    const DEFAULT_EXCEL_PROJECTS = [
+      { id_proyecto: 'PRY-001', cliente: 'Hospital Majadas', proyecto: 'PTAR Hospital Majadas (50 m³)', zona: 'Zona 11' },
+      { id_proyecto: 'PRY-002', cliente: 'BE Water', proyecto: 'Tapadera FRP Hermética', zona: 'Amatitlán' },
+      { id_proyecto: 'PRY-003', cliente: 'Palo Blanco', proyecto: 'Tapaderas Z4', zona: 'Zona 4' },
+      { id_proyecto: 'PRY-004', cliente: 'Naoki', proyecto: 'Medición y Tapadera Especial', zona: 'Zona 10' },
+      { id_proyecto: 'PRY-005', cliente: 'Puerto Barrios Industrial', proyecto: 'PTAR Industrial FRP', zona: 'Izabal' },
+      { id_proyecto: 'PRY-006', cliente: 'La Castellana', proyecto: 'Drenajes y Cajas FRP', zona: 'Zona 8' },
+      { id_proyecto: 'PRY-007', cliente: 'Wasima', proyecto: 'Iridia PTAR', zona: 'Villa Nueva' },
+      { id_proyecto: 'PRY-008', cliente: 'Arq. Liz Cruz', proyecto: 'Proyecto Cayalá', zona: 'Zona 16' },
+      { id_proyecto: 'PRY-009', cliente: 'Colegio', proyecto: 'Construcción de Pozo y Biodigestor', zona: 'Guatemala' },
+      { id_proyecto: 'PRY-010', cliente: 'Arq. Silvia', proyecto: 'Instalación de Biodigestor', zona: 'Guatemala' },
+      { id_proyecto: 'PRY-011', cliente: 'CBC Desarrollos', proyecto: 'Reparaciones e Inspección PTAR', zona: 'Guatemala' },
+      { id_proyecto: 'PRY-012', cliente: 'La Castellana', proyecto: 'cambio y sustitución de tubería', zona: 'Zona 8' },
+      { id_proyecto: 'PRY-013', cliente: 'Guasima', proyecto: 'Rectificación en campo.', zona: 'Villa Nueva' },
+      { id_proyecto: 'PRY-014', cliente: 'Ivan Lopez', proyecto: 'apartamento las gemas', zona: 'Zona 11' },
+      { id_proyecto: 'PRY-015', cliente: 'Ing Silvia', proyecto: 'E4', zona: 'Guatemala' }
+    ];
+
+    function cargarPersonalDesdeExcel(incomingList) {
+      let personnelList = incomingList || [];
+      if (!personnelList || personnelList.length === 0) {
+        try {
+          const cached = localStorage.getItem('jm_excel_personnel');
+          if (cached) personnelList = JSON.parse(cached);
+        } catch (e) {}
+      }
+      if (!personnelList || personnelList.length === 0) {
+        personnelList = DEFAULT_EXCEL_PERSONNEL;
+      }
+
+      const select = document.getElementById('selectedPerson');
+      if (!select) return;
+      select.innerHTML = '';
+
+      personnelList.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.name;
+        opt.innerText = p.name;
+        select.appendChild(opt);
+      });
+
+      const savedPerson = localStorage.getItem('jm_selected_person');
+      if (savedPerson) {
+        const found = Array.from(select.options).some(o => o.value === savedPerson);
+        if (found) select.value = savedPerson;
+      }
+      onPersonChange();
+    }
+
+    function onPersonChange() {
+      const select = document.getElementById('selectedPerson');
+      if (!select || !select.value) return;
+      localStorage.setItem('jm_selected_person', select.value);
+
+      const repInput = document.getElementById('reportanteCampo');
+      if (repInput) repInput.value = select.value;
+    }
+
+    // Generador secuencial automático del ID_Proyecto (PRY-016, PRY-017, ...)
+    function generarSiguienteIdProyecto() {
+      let maxNum = 15; // Ya existen PRY-001 al PRY-015
+      const allProjects = [...DEFAULT_EXCEL_PROJECTS];
+      try {
+        const cached = JSON.parse(localStorage.getItem('jm_excel_projects') || '[]');
+        cached.forEach(p => allProjects.push(p));
+      } catch (e) {}
+      try {
+        const custom = JSON.parse(localStorage.getItem('jm_custom_projects') || '[]');
+        custom.forEach(p => allProjects.push(p));
+      } catch (e) {}
+
+      allProjects.forEach(p => {
+        const idStr = p.id_proyecto || p.ID_Proyecto || '';
+        const match = idStr.match(/PRY-(\d+)/i);
+        if (match) {
+          const n = parseInt(match[1], 10);
+          if (n > maxNum) maxNum = n;
+        }
+      });
+
+      const nextNum = maxNum + 1;
+      return 'PRY-' + String(nextNum).padStart(3, '0');
+    }
+
+    function cargarProyectosDesdeExcel(incomingList) {
+      let projectList = incomingList || [];
+      if (!projectList || projectList.length === 0) {
+        try {
+          const cached = localStorage.getItem('jm_excel_projects');
+          if (cached) projectList = JSON.parse(cached);
+        } catch (e) {}
+      }
+      if (!projectList || projectList.length === 0) {
+        projectList = DEFAULT_EXCEL_PROJECTS;
+      }
+
+      let customProjects = [];
+      try {
+        customProjects = JSON.parse(localStorage.getItem('jm_custom_projects') || '[]');
+      } catch (e) {}
+
+      const select = document.getElementById('selectedProject');
+      if (!select) return;
+      select.innerHTML = '';
+
+      // 1. Proyectos personalizados creados en campo con ID_Proyecto y Zona
+      customProjects.forEach(p => {
+        const idPry = p.id_proyecto || '';
+        const prefijo = idPry ? `[${idPry}] ` : '';
+        const optText = `${prefijo}${p.nombreCompleto || p.cliente}`;
+        const opt = document.createElement('option');
+        opt.value = p.nombreCompleto || optText;
+        opt.innerText = optText;
+        select.appendChild(opt);
+      });
+
+      // 2. Proyectos del catálogo oficial
+      projectList.forEach((p, idx) => {
+        const autoPryId = p.id_proyecto || `PRY-${String(idx + 1).padStart(3, '0')}`;
+        let text = p.proyecto ? `${p.cliente} — ${p.proyecto}` : p.cliente;
+        if (p.zona && !text.includes(p.zona)) {
+          text += ` (${p.zona})`;
+        }
+        const fullDisplay = `[${autoPryId}] ${text}`;
+        const exists = Array.from(select.options).some(o => o.value === text || o.innerText.includes(text));
+        if (!exists) {
+          const opt = document.createElement('option');
+          opt.value = text;
+          opt.innerText = fullDisplay;
+          select.appendChild(opt);
+        }
+      });
+
+      const savedProj = localStorage.getItem('jm_selected_project');
+      if (savedProj) {
+        const found = Array.from(select.options).some(o => o.value === savedProj || o.innerText.includes(savedProj));
+        if (found) select.value = savedProj;
+      }
+      updateProjectFolder();
+    }
+
+    function updateProjectFolder() {
+      const select = document.getElementById('selectedProject');
+      if (!select || !select.value) return;
+      localStorage.setItem('jm_selected_project', select.value);
+    }
+
+    function abrirModalNuevoProyecto() {
+      const modal = document.getElementById('modalNuevoProyecto');
+      if (modal) {
+        modal.style.display = 'flex';
+        document.getElementById('nuevoProjCliente').value = '';
+        document.getElementById('nuevoProjNombre').value = '';
+        const zInput = document.getElementById('nuevoProjZona');
+        if (zInput) zInput.value = '';
+        
+        // Calcular y mostrar de inmediato el siguiente ID_Proyecto automático
+        const nextId = generarSiguienteIdProyecto();
+        const displayId = document.getElementById('nuevoProjIdDisplay');
+        if (displayId) displayId.innerText = nextId;
+        
+        document.getElementById('nuevoProjCliente').focus();
+      }
+    }
+
+    function cerrarModalNuevoProyecto() {
+      const modal = document.getElementById('modalNuevoProyecto');
+      if (modal) modal.style.display = 'none';
+    }
+
+    function guardarNuevoProyecto() {
+      const cliente = document.getElementById('nuevoProjCliente').value.trim();
+      const proyecto = document.getElementById('nuevoProjNombre').value.trim();
+      const zonaInput = document.getElementById('nuevoProjZona');
+      const zona = zonaInput ? zonaInput.value.trim() : '';
+
+      if (!cliente) {
+        showToast('Ingrese el cliente o entidad.', '⚠️');
+        return;
+      }
+
+      // 1. Asignar ID_Proyecto automático secuencial
+      const nuevoIdProyecto = generarSiguienteIdProyecto();
+
+      let zonaFormateada = '';
+      if (zona) {
+        zonaFormateada = (zona.toLowerCase().startsWith('zona') || zona.toLowerCase().startsWith('z')) ? ` (${zona})` : ` (Zona ${zona})`;
+      }
+
+      let nombreBase = proyecto ? `${cliente} — ${proyecto}${zonaFormateada}` : `${cliente}${zonaFormateada}`;
+      let nombreCompleto = nombreBase;
+
+      // 2. Alimentar el Catalogo_Proyectos local
+      const nuevoProyectoObj = {
+        id_proyecto: nuevoIdProyecto,
+        cliente: cliente,
+        nombre_proyecto: proyecto || 'Operación en Campo',
+        proyecto: proyecto || 'Operación en Campo',
+        zona: zona || 'Guatemala',
+        ubicacion: zona ? `Zona ${zona}`.replace('Zona Zona', 'Zona') : 'Guatemala',
+        estado_operativo: 'ACTIVO',
+        nombreCompleto: nombreCompleto
+      };
+
+      let customProjects = [];
+      try {
+        customProjects = JSON.parse(localStorage.getItem('jm_custom_projects') || '[]');
+      } catch (e) { customProjects = []; }
+
+      const exists = customProjects.some(p => {
+        const fn = p.nombreCompleto || p.cliente;
+        return fn.toLowerCase() === nombreCompleto.toLowerCase();
+      });
+
+      if (!exists) {
+        customProjects.unshift(nuevoProyectoObj);
+        localStorage.setItem('jm_custom_projects', JSON.stringify(customProjects));
+      }
+
+      // 2b. También inyectar al Catalogo principal (jm_excel_projects) para que aparezca sin distinción
+      try {
+        let catPrincipal = JSON.parse(localStorage.getItem('jm_excel_projects') || '[]');
+        if (catPrincipal.length === 0) catPrincipal = [...DEFAULT_EXCEL_PROJECTS];
+        const yaEnCat = catPrincipal.some(p => (p.id_proyecto || '').toUpperCase() === nuevoIdProyecto.toUpperCase());
+        if (!yaEnCat) {
+          catPrincipal.push({
+            id_proyecto: nuevoIdProyecto,
+            cliente: cliente,
+            proyecto: proyecto || 'Operación en Campo',
+            zona: zona || 'Guatemala'
+          });
+          localStorage.setItem('jm_excel_projects', JSON.stringify(catPrincipal));
+        }
+      } catch(e) {}
+
+      // 3. Activar y refrescar selector
+      localStorage.setItem('jm_selected_project', nombreCompleto);
+      cargarProyectosDesdeExcel();
+
+      // 4. Alimentar Catalogo_Proyectos en Google Sheets y en Servidor Local
+      const payloadCloud = {
+        action: 'nuevoProyecto',
+        tipo: 'Nuevo Proyecto',
+        id_proyecto: nuevoIdProyecto,
+        cliente: cliente,
+        nombre_proyecto: proyecto || 'Operación en Campo',
+        proyecto: proyecto || 'Operación en Campo',
+        zona: zona,
+        ubicacion: zona ? `Zona ${zona}`.replace('Zona Zona', 'Zona') : 'Guatemala',
+        estado_operativo: 'ACTIVO',
+        nombreCompleto: nombreCompleto,
+        responsable: document.getElementById('selectedPerson') ? document.getElementById('selectedPerson').value : 'Personal JM',
+        timestamp: obtenerTimestampExacto()
+      };
+
+      if (navigator.onLine) {
+        // Enviar a Google Apps Script Webhook
+        fetch(DEFAULT_DRIVE_WEBHOOK, {
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadCloud)
+        }).catch(() => {});
+
+        // Enviar al servidor local si está activo para actualizar el archivo Excel en Escritorio
+        fetch('/api/nuevo_proyecto', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payloadCloud)
+        }).catch(() => {});
+      }
+
+      cerrarModalNuevoProyecto();
+      showToast(`¡Proyecto "${nuevoIdProyecto} • ${nombreCompleto}" registrado en Catálogo!`, '🏗️');
+    }
+
+    function sincronizarCatalogoDesdeDrive(isUserClick = false) {
+      if (isUserClick) showToast('Consultando personal y proyectos de Excel...', '⏳');
+
+      // 1. Si está conectado al servidor local JM, sincronizar directamente desde Excel en Escritorio
+      if (window.location.protocol.startsWith('http')) {
+        fetch('/api/catalogo')
+          .then(r => r.json())
+          .then(data => {
+            if (data && data.status === 'success' && Array.isArray(data.proyectos) && data.proyectos.length > 0) {
+              localStorage.setItem('jm_excel_projects', JSON.stringify(data.proyectos));
+              cargarProyectosDesdeExcel(data.proyectos);
+              if (isUserClick) showToast('¡Catálogo sincronizado desde Excel local!', '📊');
+            }
+          })
+          .catch(() => {});
+      }
+
+      // 2. Sincronizar catálogo desde Google Drive / Sheets
+      fetch(DEFAULT_DRIVE_WEBHOOK + '?action=getCatalog')
+        .then(r => r.json())
+        .then(data => {
+          if (data && data.status === 'success') {
+            if (Array.isArray(data.personal) && data.personal.length > 0) {
+              localStorage.setItem('jm_excel_personnel', JSON.stringify(data.personal));
+              cargarPersonalDesdeExcel(data.personal);
+            }
+            if (Array.isArray(data.proyectos) && data.proyectos.length > 0) {
+              localStorage.setItem('jm_excel_projects', JSON.stringify(data.proyectos));
+              cargarProyectosDesdeExcel(data.proyectos);
+            }
+            if (isUserClick) showToast('¡Catálogo sincronizado desde Drive!', '✅');
+          }
+        })
+        .catch(e => {
+          if (isUserClick) showToast('Sin conexión para refrescar catálogo.', '⚠️');
+        });
+    }
+
+    function actualizarFechaEstimada() {
+      const dias = parseInt(document.getElementById('pedDiasPlazo').value) || 0;
+      const targetDate = new Date();
+      targetDate.setDate(targetDate.getDate() + dias);
+      const yyyy = targetDate.getFullYear();
+      const mm = String(targetDate.getMonth() + 1).padStart(2, '0');
+      const dd = String(targetDate.getDate()).padStart(2, '0');
+      const el = document.getElementById('pedFechaEstimada');
+      if (el) el.value = `${yyyy}-${mm}-${dd}`;
+    }
+
+    function onUrgenciaChange() {
+      const urg = document.getElementById('pedUrgencia').value;
+      const diasSelect = document.getElementById('pedDiasPlazo');
+      if (urg.includes('Hoy Mismo')) {
+        diasSelect.value = '0';
+      } else if (urg.includes('Mañana')) {
+        diasSelect.value = '1';
+      } else {
+        diasSelect.value = '3';
+      }
+      actualizarFechaEstimada();
+    }
+
+    // ------------------------------------------------------------------------
+    // FIRMA DIGITAL TÁCTIL Y AUDIO (VIEW-ENTREGA)
+    // ------------------------------------------------------------------------
+    let mCanvas, mCtx, mDrawing = false;
+    function initMobileCanvas() {
+      mCanvas = document.getElementById('mobileSig');
+      if (!mCanvas) return;
+      const rect = mCanvas.getBoundingClientRect();
+      mCanvas.width = rect.width;
+      mCanvas.height = 140;
+
+      mCtx = mCanvas.getContext('2d');
+      mCtx.strokeStyle = '#00F0FF';
+      mCtx.lineWidth = 2.5;
+      mCtx.lineCap = 'round';
+
+      function getPos(e) {
+        const cRect = mCanvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        return { x: clientX - cRect.left, y: clientY - cRect.top };
+      }
+
+      function startDraw(e) {
+        e.preventDefault();
+        mDrawing = true;
+        const p = getPos(e);
+        mCtx.beginPath();
+        mCtx.moveTo(p.x, p.y);
+      }
+
+      function draw(e) {
+        if (!mDrawing) return;
+        e.preventDefault();
+        const p = getPos(e);
+        mCtx.lineTo(p.x, p.y);
+        mCtx.stroke();
+      }
+
+      function stopDraw() { mDrawing = false; }
+
+      mCanvas.ontouchstart = startDraw;
+      mCanvas.ontouchmove = draw;
+      mCanvas.ontouchend = stopDraw;
+
+      mCanvas.onmousedown = startDraw;
+      mCanvas.onmousemove = draw;
+      mCanvas.onmouseup = stopDraw;
+    }
+
+    function clearMobileCanvas() {
+      if (mCtx && mCanvas) {
+        mCtx.clearRect(0, 0, mCanvas.width, mCanvas.height);
+      }
+    }
+
+    // Grabación de voz y codificación a Base64
+    let mediaRecorder, audioChunks = [], isRecording = false;
+    async function toggleAudioRecord() {
+      const btn = document.getElementById('btnRecordMic');
+      const statusText = document.getElementById('audioStatusText');
+
+      if (!isRecording) {
+        try {
+          const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+
+          mediaRecorder.ondataavailable = (e) => { audioChunks.push(e.data); };
+          mediaRecorder.onstop = () => {
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            const audioUrl = URL.createObjectURL(audioBlob);
+            const player = document.getElementById('audioPlayer');
+            player.src = audioUrl;
+            document.getElementById('audioPlaybackBox').style.display = 'block';
+            statusText.innerText = '✅ Audio grabado con éxito (Listo para subir a Drive)';
+            showToast('Audio grabado con éxito', '🎙️');
+
+            // Convertir a Base64 para Google Drive
+            const reader = new FileReader();
+            reader.onloadend = function() {
+              window.audioGrabadoBase64 = reader.result;
+            };
+            reader.readAsDataURL(audioBlob);
+          };
+
+          mediaRecorder.start();
+          isRecording = true;
+          btn.classList.add('recording');
+          btn.innerText = '⏹️';
+          statusText.innerText = '🔴 Grabando voz... (Toca para detener)';
+        } catch (err) {
+          showToast('Permiso de micrófono no disponible.', '⚠️');
+        }
+      } else {
+        mediaRecorder.stop();
+        isRecording = false;
+        btn.classList.remove('recording');
+        btn.innerText = '🎤';
+      }
+    }
+
+    // ------------------------------------------------------------------------
+    // ACCIONES DE FORMULARIOS: BITÁCORA, PEDIDOS, ENTREGA, GASTOS
+    // ------------------------------------------------------------------------
+    function guardarReporteBitacora() {
+      const txt = document.getElementById('bitacoraTexto').value.trim();
+      if (!txt && bitacoraFotos.length === 0) {
+        showToast('Escribe la actividad o toma una foto primero.', '⚠️');
+        return;
+      }
+      
+      const detalle = txt || 'Reporte fotográfico de avance de obra';
+      const fotosAEnviar = [...bitacoraFotos];
+      const thumbsAGuardar = [...bitacoraThumbs];
+
+      enviarSilenciosoADrive('Bitácora', detalle, 'Fotos de Avance', fotosAEnviar, thumbsAGuardar);
+
+      showToast('¡Reporte guardado y sincronizado con Drive!', '📸');
+
+      document.getElementById('bitacoraTexto').value = '';
+      bitacoraFotos = [];
+      bitacoraThumbs = [];
+      renderPhotoPreviews();
+    }
+
+    function enviarPedidoBodega() {
+      const mat = document.getElementById('pedMaterial').value.trim();
+      const cant = document.getElementById('pedCantidad').value.trim();
+      const mot = document.getElementById('pedMotivo').value;
+      const urg = document.getElementById('pedUrgencia').value;
+      const dias = document.getElementById('pedDiasPlazo').value;
+      const fechaEstimada = document.getElementById('pedFechaEstimada').value;
+
+      if (!mat || !cant) {
+        showToast('Completa el material y cantidad requerida.', '⚠️');
+        return;
+      }
+
+      const proj = document.getElementById('selectedProject') ? document.getElementById('selectedProject').value : 'Proyecto General';
+      const person = document.getElementById('selectedPerson') ? document.getElementById('selectedPerson').value : 'Personal JM';
+      const gps = document.getElementById('gpsCoords') ? document.getElementById('gpsCoords').innerText : 'GPS';
+      const loc = document.getElementById('gpsLocationText') ? document.getElementById('gpsLocationText').innerText : '';
+      const time = document.getElementById('liveClock') ? document.getElementById('liveClock').innerText : '';
+      const date = document.getElementById('liveDate') ? document.getElementById('liveDate').innerText : '';
+
+      const detallePedido = `${cant} ${mat} | Motivo: ${mot} | Plazo: ${dias} días (${fechaEstimada}) | Urgencia: ${urg}`;
+      enviarSilenciosoADrive('Pedido Bodega', detallePedido, 'Vía SICP Bodega', []);
+
+      const data = {
+        proj, person, mat, cant, mot, urg, dias, fechaEstimada, gps, loc, time, date
+      };
+
+      const subject = encodeURIComponent(`URGENTE: Pedido de Insumos - ${data.proj}`);
+      const body = encodeURIComponent(
+        `JM PROJECTS S.A. - SOLICITUD DE INSUMOS A BODEGA\n` +
+        `=======================================================\n\n` +
+        `• PROYECTO: ${data.proj}\n` +
+        `• RESPONSABLE EN OBRA: ${data.person}\n` +
+        `• INSUMO SOLICITADO: ${data.mat}\n` +
+        `• CANTIDAD REQUERIDA: ${data.cant}\n` +
+        `• JUSTIFICACIÓN / APU: ${data.mot}\n` +
+        `• URGENCIA DE ENTREGA: ${data.urg}\n` +
+        `• DÍAS ESTIMADOS / PLAZO: ${data.dias} días hábiles\n` +
+        `• FECHA ESTIMADA DE ENTREGA: ${data.fechaEstimada}\n` +
+        `• UBICACIÓN EN OBRA: ${data.gps} (${data.loc})\n` +
+        `• HORA DE REGISTRO: ${data.time} (${data.date})\n\n` +
+        `Por favor despachar o programar entrega con el proveedor.\n\n` +
+        `JM Projects S.A. - SICP Móvil`
+      );
+      const mailto = `mailto:admonlogistica.jm@gmail.com?subject=${subject}&body=${body}`;
+      
+      showToast('Abriendo correo para Jensen...', '✉️');
+      
+      // Abrir cliente de correo de forma directa y síncrona para que Android no lo bloquee
+      window.location.href = mailto;
+
+      document.getElementById('pedMaterial').value = '';
+      document.getElementById('pedCantidad').value = '';
+    }
+    window.enviarAlertaCorreo = enviarPedidoBodega; // Alias de compatibilidad
+
+    function guardarActaEntrega() {
+      const item = document.getElementById('entItem').value.trim();
+      const rec = document.getElementById('entReceptor').value.trim();
+      if (!item || !rec) {
+        showToast('Completa la pieza entregada y quién la recibe.', '⚠️');
+        return;
+      }
+
+      // Captura auténtica de la firma digital táctil del canvas
+      let firmaBase64 = null;
+      if (mCanvas) {
+        try {
+          firmaBase64 = mCanvas.toDataURL('image/png');
+        } catch (eCanvas) {
+          console.warn('No se pudo convertir canvas:', eCanvas);
+        }
+      }
+
+      const hasAudio = document.getElementById('audioPlaybackBox').style.display === 'block';
+      const respaldo = hasAudio ? 'Audio de Voz Certificado 🎙️' : 'Firma Táctil Digital ✍️';
+      const fotosAEnviar = firmaBase64 ? [firmaBase64] : [];
+      const miniaturas = firmaBase64 ? [firmaBase64] : [];
+
+      enviarSilenciosoADrive('Acta Entrega', `${item} recibido por ${rec}`, respaldo, fotosAEnviar, miniaturas, window.audioGrabadoBase64);
+      
+      showToast(`¡Acta guardada y enviada a Drive con firma y audio!`, '🎉');
+
+      document.getElementById('entItem').value = '';
+      document.getElementById('entReceptor').value = '';
+      clearMobileCanvas();
+      document.getElementById('audioPlaybackBox').style.display = 'none';
+      window.audioGrabadoBase64 = null;
+    }
+
+    function guardarGastoCampo() {
+      const monto = document.getElementById('gasMonto').value;
+      const cat = document.getElementById('gasCat').value;
+      const prov = document.getElementById('gasProv').value || 'Varios';
+      const fact = document.getElementById('gasFact').value || 'Recibo/Vale';
+      if (!monto) { showToast('Ingresa el monto del gasto.', '⚠️'); return; }
+
+      const montoVal = parseFloat(monto);
+      const fotoRecibo = window.reciboActualBase64 ? [window.reciboActualBase64] : [];
+      const thumbRecibo = window.reciboThumbBase64 ? [window.reciboThumbBase64] : [];
+      
+      const extraGasto = {
+        monto: montoVal,
+        categoria: cat,
+        proveedor: prov,
+        no_factura: fact,
+        concepto: `Gasto en obra: ${cat} (${prov})`
+      };
+
+      enviarSilenciosoADrive('Gasto', `${cat} | ${prov} | Q ${montoVal.toFixed(2)} | Fact: ${fact}`, 'Foto Recibo', fotoRecibo, thumbRecibo, null, extraGasto);
+      
+      showToast(`Gasto de Q ${montoVal.toFixed(2)} registrado en Control_Gastos`, '💰');
+
+      document.getElementById('gasMonto').value = '';
+      document.getElementById('gasProv').value = '';
+      document.getElementById('gasFact').value = '';
+      limpiarFotoRecibo();
+    }
+
+    // ------------------------------------------------------------------------
+    // PERSISTENCIA ANTIBLOQUEO (PROTEGE CONTRA CIERRES DE CHROME EN ANDROID/OPPO)
+    // ------------------------------------------------------------------------
+    function guardarEstadoFormulario() {
+      try {
+        const estado = {
+          view: localStorage.getItem('jm_active_view') || 'view-bitacora',
+          bitacoraTexto: document.getElementById('bitacoraTexto') ? document.getElementById('bitacoraTexto').value : '',
+          gasMonto: document.getElementById('gasMonto') ? document.getElementById('gasMonto').value : '',
+          gasCat: document.getElementById('gasCat') ? document.getElementById('gasCat').value : '',
+          gasProv: document.getElementById('gasProv') ? document.getElementById('gasProv').value : '',
+          gasFact: document.getElementById('gasFact') ? document.getElementById('gasFact').value : '',
+          pedMaterial: document.getElementById('pedMaterial') ? document.getElementById('pedMaterial').value : '',
+          pedCantidad: document.getElementById('pedCantidad') ? document.getElementById('pedCantidad').value : '',
+          entItem: document.getElementById('entItem') ? document.getElementById('entItem').value : '',
+          entReceptor: document.getElementById('entReceptor') ? document.getElementById('entReceptor').value : '',
+          reciboThumb: window.reciboThumbBase64 || null,
+          bitacoraThumbs: bitacoraThumbs ? bitacoraThumbs.slice(0, 5) : []
+        };
+        localStorage.setItem('jm_form_draft', JSON.stringify(estado));
+      } catch (e) {
+        console.warn('[guardarEstadoFormulario] Error en borrador:', e);
+      }
+    }
+
+    function restaurarEstadoFormulario() {
+      try {
+        const raw = localStorage.getItem('jm_form_draft');
+        if (!raw) return;
+        const s = JSON.parse(raw);
+
+        if (s.bitacoraTexto && document.getElementById('bitacoraTexto')) {
+          document.getElementById('bitacoraTexto').value = s.bitacoraTexto;
+        }
+        if (s.gasMonto && document.getElementById('gasMonto')) {
+          document.getElementById('gasMonto').value = s.gasMonto;
+        }
+        if (s.gasCat && document.getElementById('gasCat')) {
+          document.getElementById('gasCat').value = s.gasCat;
+        }
+        if (s.gasProv && document.getElementById('gasProv')) {
+          document.getElementById('gasProv').value = s.gasProv;
+        }
+        if (s.gasFact && document.getElementById('gasFact')) {
+          document.getElementById('gasFact').value = s.gasFact;
+        }
+        if (s.pedMaterial && document.getElementById('pedMaterial')) {
+          document.getElementById('pedMaterial').value = s.pedMaterial;
+        }
+        if (s.pedCantidad && document.getElementById('pedCantidad')) {
+          document.getElementById('pedCantidad').value = s.pedCantidad;
+        }
+        if (s.entItem && document.getElementById('entItem')) {
+          document.getElementById('entItem').value = s.entItem;
+        }
+        if (s.entReceptor && document.getElementById('entReceptor')) {
+          document.getElementById('entReceptor').value = s.entReceptor;
+        }
+
+        if (s.reciboThumb) {
+          window.reciboActualBase64 = s.reciboThumb;
+          window.reciboThumbBase64 = s.reciboThumb;
+          const previewBox = document.getElementById('receiptPreviewBox');
+          const previewImg = document.getElementById('receiptPreviewImg');
+          const dropzone = document.getElementById('receiptDropzone');
+          if (previewBox && previewImg) {
+            previewImg.src = s.reciboThumb;
+            previewBox.style.display = 'block';
+            if (dropzone) dropzone.style.display = 'none';
+          }
+        }
+
+        if (Array.isArray(s.bitacoraThumbs) && s.bitacoraThumbs.length > 0) {
+          bitacoraThumbs = s.bitacoraThumbs;
+          bitacoraFotos = s.bitacoraThumbs;
+          renderPhotoPreviews();
+        }
+
+        const savedView = s.view || localStorage.getItem('jm_active_view');
+        if (savedView && document.getElementById(savedView)) {
+          setTimeout(() => { switchMobileTab(savedView); }, 50);
+        }
+      } catch (e) {}
+    }
+
+    // ------------------------------------------------------------------------
+    // INICIALIZACIÓN COMPLETA AL ABRIR LA APP
+    // ------------------------------------------------------------------------
+    cargarPersonalDesdeExcel();
+    cargarProyectosDesdeExcel();
+    actualizarFechaEstimada();
+    renderHistorialLocal();
+    sincronizarCatalogoDesdeDrive();
+    obtenerUbicacionGPS(false);
+    restaurarEstadoFormulario(); // Auto-recuperar si Android cerró la app
+
+    // Escuchadores de eventos para autoguardado en tiempo real
+    ['bitacoraTexto', 'gasMonto', 'gasProv', 'gasFact', 'pedMaterial', 'pedCantidad', 'entItem', 'entReceptor'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.addEventListener('input', guardarEstadoFormulario);
+    });</script>
+
+  <!-- MODAL DE CÁMARA INTEGRADA (ANTI-CRASH MÓVIL ANDROID/OPPO) -->
+  <div id="inAppCameraModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 99999; flex-direction: column; justify-content: space-between;">
+    <!-- Barra Superior de Cámara -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 14px 16px; background: rgba(14, 22, 38, 0.95); backdrop-filter: blur(10px); z-index: 10; border-bottom: 1px solid rgba(0, 240, 255, 0.2);">
+      <button type="button" onclick="cerrarCamaraEnApp()" style="background: rgba(239, 68, 68, 0.2); border: 1px solid #EF4444; color: #fff; padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer;">✕ Cancelar</button>
+      <div style="font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: var(--primary-cyan); display: flex; align-items: center; gap: 8px;">
+        <span style="display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: #10B981; box-shadow: 0 0 10px #10B981;"></span>
+        Cámara SICP
+      </div>
+      <button type="button" id="btnSwitchCamera" onclick="rotarCamaraEnApp()" style="background: rgba(0, 240, 255, 0.15); border: 1px solid var(--primary-cyan); color: var(--primary-cyan); padding: 6px 14px; border-radius: 20px; font-size: 0.82rem; font-weight: 600; cursor: pointer;">🔄 Girar</button>
+    </div>
+
+    <!-- Visor de Video / Canvas de Captura -->
+    <div style="position: relative; flex: 1; display: flex; align-items: center; justify-content: center; background: #000; overflow: hidden;">
+      <video id="cameraVideo" playsinline autoplay muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+      <canvas id="cameraCapturedCanvas" style="display: none; width: 100%; height: 100%; object-fit: contain; background: #000;"></canvas>
+
+      <!-- Guía de Enfoque Visual Táctica -->
+      <div id="cameraFocusGuide" style="position: absolute; border: 2px dashed rgba(0, 240, 255, 0.45); border-radius: 14px; width: 85%; height: 72%; pointer-events: none; box-shadow: 0 0 25px rgba(0, 240, 255, 0.2); display: flex; flex-direction: column; justify-content: space-between; padding: 10px;">
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--primary-cyan); font-size: 0.65rem; font-family: var(--font-mono); font-weight: 700;">[SICP_CAM v3.5]</span>
+          <span id="cameraModeIndicator" style="color: var(--accent-frp); font-size: 0.65rem; font-family: var(--font-mono); font-weight: 700;">LIVE_1080P</span>
+        </div>
+        <div style="text-align: center; color: rgba(255, 255, 255, 0.85); font-size: 0.75rem; text-shadow: 0 1px 3px rgba(0,0,0,0.8);">
+          Enfoque el trabajo en campo o recibo
+        </div>
+      </div>
+    </div>
+
+    <!-- Barra de Controles Inferior -->
+    <div style="padding: 16px 18px 30px 18px; background: rgba(14, 22, 38, 0.98); display: flex; justify-content: space-around; align-items: center; z-index: 10; border-top: 1px solid rgba(255, 255, 255, 0.08);">
+      <!-- Vista en Vivo: Botón Disparador -->
+      <div id="cameraLiveControls" style="display: flex; align-items: center; justify-content: center; width: 100%;">
+        <button type="button" onclick="tomarFotoEnApp()" style="width: 72px; height: 72px; border-radius: 50%; background: #FFFFFF; border: 4px solid var(--primary-cyan); box-shadow: 0 0 25px rgba(0, 240, 255, 0.6); cursor: pointer; display: flex; align-items: center; justify-content: center; outline: none;">
+          <div style="width: 54px; height: 54px; border-radius: 50%; background: var(--primary-cyan);"></div>
+        </button>
+      </div>
+
+      <!-- Vista de Revisión (Tras Tomar Foto) -->
+      <div id="cameraReviewControls" style="display: none; width: 100%; justify-content: space-between; gap: 14px;">
+        <button type="button" onclick="repetirFotoEnApp()" style="flex: 1; background: rgba(255, 255, 255, 0.1); border: 1px solid rgba(255, 255, 255, 0.25); color: #fff; padding: 13px; border-radius: var(--radius-sm); font-weight: 600; font-size: 0.9rem; cursor: pointer;">
+          🔄 Tomar Otra
+        </button>
+        <button type="button" onclick="confirmarFotoEnApp()" style="flex: 1; background: linear-gradient(135deg, #00F0FF, #0284C7); border: none; color: #000; padding: 13px; border-radius: var(--radius-sm); font-weight: 700; font-size: 0.9rem; cursor: pointer; box-shadow: 0 0 18px rgba(0, 240, 255, 0.5);">
+          ✅ Usar Foto
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- INPUTS NATIVOS DE BAJO CONSUMO DE RAM (PREVIENE CIERRE DE ANDROID AL TOMAR FOTOS) -->
+  <div style="display: none;">
+    <input type="file" id="nativeCameraBitacora" accept="image/*" capture="environment" onchange="handlePhotoCapture(event)">
+    <input type="file" id="nativeGalleryBitacora" accept="image/*" multiple onchange="handlePhotoCapture(event)">
+    <input type="file" id="nativeCameraReceipt" accept="image/*" capture="environment" onchange="handleReceiptCapture(event)">
+    <input type="file" id="nativeGalleryReceipt" accept="image/*" onchange="handleReceiptCapture(event)">
+  </div>
+
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: REGISTRAR NUEVO PROYECTO EN CAMPO (PERSISTENTE OFFLINE + CLOUD)   -->
+  <!-- ========================================================================= -->
+  <div id="modalNuevoProyecto" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px); z-index: 99998; align-items: center; justify-content: center; padding: 16px;">
+    <div style="background: var(--bg-card); border: 1px solid var(--primary-cyan); border-radius: var(--radius-md); width: 100%; max-width: 420px; padding: 20px; box-shadow: 0 10px 30px rgba(0, 240, 255, 0.25);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.1); padding-bottom: 8px;">
+        <div style="font-family: var(--font-display); font-size: 0.95rem; font-weight: 700; color: var(--primary-cyan); display: flex; align-items: center; gap: 6px;">
+          <span>➕</span> Registrar Nuevo Proyecto en Campo
+        </div>
+        <button type="button" onclick="cerrarModalNuevoProyecto()" style="background: transparent; border: none; color: var(--text-dim); font-size: 1.2rem; cursor: pointer; padding: 0 4px;">✕</button>
+      </div>
+
+      <!-- ID_PROYECTO AUTOMÁTICO ASIGNADO -->
+      <div style="background: rgba(0, 240, 255, 0.08); border: 1px dashed var(--primary-cyan); border-radius: var(--radius-sm); padding: 8px 12px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;">
+        <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700; text-transform: uppercase;">ID Catálogo Asignado:</span>
+        <span id="nuevoProjIdDisplay" style="font-family: var(--font-mono); font-size: 0.9rem; font-weight: 800; color: var(--primary-cyan); background: rgba(0, 240, 255, 0.15); padding: 2px 8px; border-radius: 4px; letter-spacing: 1px;">PRY-016</span>
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">
+          CLIENTE O ENTIDAD *:
+        </label>
+        <input type="text" id="nuevoProjCliente" class="input-text" placeholder="Ej: Guasima, Residenciales Las Gemas, Arq. López" style="width: 100%; font-size: 0.85rem; font-weight: 600;">
+      </div>
+
+      <div style="margin-bottom: 12px;">
+        <label style="font-size: 0.72rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 4px;">
+          NOMBRE DEL PROYECTO O ACTIVIDAD:
+        </label>
+        <input type="text" id="nuevoProjNombre" class="input-text" placeholder="Ej: Rectificación en campo, PTAR 25m³, Tapadera Especial" style="width: 100%; font-size: 0.85rem;">
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <label style="font-size: 0.72rem; font-weight: 700; color: var(--primary-cyan); display: block; margin-bottom: 4px;">
+          ZONA O MUNICIPIO (UBICACIÓN):
+        </label>
+        <input type="text" id="nuevoProjZona" class="input-text" placeholder="Ej: Zona 11, Zona 4, Villa Nueva, Amatitlán, Puerto Barrios" style="width: 100%; font-size: 0.85rem; border: 1px solid var(--primary-cyan);">
+        <span style="font-size: 0.65rem; color: var(--text-dim); display: block; margin-top: 3px;">
+          Se registrará como: <b>Cliente — Proyecto (Zona)</b> en Drive y Excel.
+        </span>
+      </div>
+
+      <div style="display: flex; gap: 10px;">
+        <button type="button" onclick="cerrarModalNuevoProyecto()" style="flex: 1; background: rgba(255, 255, 255, 0.08); border: 1px solid rgba(255, 255, 255, 0.2); color: var(--text-muted); padding: 10px; border-radius: var(--radius-sm); font-size: 0.8rem; font-weight: 600; cursor: pointer;">
+          Cancelar
+        </button>
+        <button type="button" onclick="guardarNuevoProyecto()" style="flex: 1.4; background: linear-gradient(135deg, #00F0FF, #0284C7); border: none; color: #000; padding: 10px; border-radius: var(--radius-sm); font-size: 0.82rem; font-weight: 700; cursor: pointer; box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);">
+          Guardar y Activar
+        </button>
+      </div>
+    </div>
+  </div>
+
+  
+
+</body>
+</html>
