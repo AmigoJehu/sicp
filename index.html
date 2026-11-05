@@ -2074,7 +2074,15 @@
       };
 
       if (navigator.onLine) {
-        // Enviar a Google Apps Script Webhook
+        // 1. Enviar a Google Apps Script vía GET (resistente a CORS y redirecciones)
+        const getUrl = DEFAULT_DRIVE_WEBHOOK + '?action=nuevoProyecto' +
+          '&id_proyecto=' + encodeURIComponent(nuevoIdProyecto) +
+          '&cliente=' + encodeURIComponent(cliente) +
+          '&proyecto=' + encodeURIComponent(proyecto || 'Operación en Campo') +
+          '&ubicacion=' + encodeURIComponent(zona || 'Guatemala');
+        fetch(getUrl, { mode: 'no-cors' }).catch(() => {});
+
+        // 2. Enviar a Google Apps Script vía POST
         fetch(DEFAULT_DRIVE_WEBHOOK, {
           method: 'POST',
           mode: 'no-cors',
@@ -2082,7 +2090,7 @@
           body: JSON.stringify(payloadCloud)
         }).catch(() => {});
 
-        // Enviar al servidor local si está activo para actualizar el archivo Excel en Escritorio
+        // 3. Enviar al servidor local si está activo para actualizar el archivo Excel en Escritorio
         fetch('/api/nuevo_proyecto', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
