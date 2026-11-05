@@ -1335,12 +1335,144 @@
     // =========================================================================
     // DISPARADOR DE CÁMARA NATIVA
     // =========================================================================
+    // =========================================================================
+    // CÁMARA EN VIVO INTEGRADA (WEBRTC USERMEDIA - CERO SALIDAS DE LA APP)
+    // =========================================================================
+    let streamEnVivo = null;
+    let facingModeActual = 'environment';
+
+    async function abrirCamaraEnVivo(origen) {
+      window.camaraActivaOrigen = origen;
+      guardarEstadoFormulario();
+
+      const modal = document.getElementById('modalCamaraEnVivo');
+      const video = document.getElementById('cameraVideo');
+
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        dispararSelectorNativo(origen, 'camara');
+        return;
+      }
+
+      try {
+        if (modal) modal.style.display = 'flex';
+        const constraints = {
+          video: {
+            facingMode: { ideal: facingModeActual },
+            width: { ideal: 1280 },
+            height: { ideal: 720 }
+          },
+          audio: false
+        };
+
+        streamEnVivo = await navigator.mediaDevices.getUserMedia(constraints);
+        if (video) {
+          video.srcObject = streamEnVivo;
+          await video.play();
+        }
+      } catch (err) {
+        console.warn('[Cámara en Vivo Fallback]', err);
+        cerrarCamaraEnVivo();
+        dispararSelectorNativo(origen, 'camara');
+      }
+    }
+
+    function alternarCamara() {
+      facingModeActual = (facingModeActual === 'environment') ? 'user' : 'environment';
+      if (streamEnVivo) {
+        streamEnVivo.getTracks().forEach(t => t.stop());
+        streamEnVivo = null;
+      }
+      abrirCamaraEnVivo(window.camaraActivaOrigen || 'bitacora');
+    }
+
+    function cerrarCamaraEnVivo() {
+      const modal = document.getElementById('modalCamaraEnVivo');
+      const video = document.getElementById('cameraVideo');
+      if (streamEnVivo) {
+        streamEnVivo.getTracks().forEach(track => track.stop());
+        streamEnVivo = null;
+      }
+      if (video) {
+        video.srcObject = null;
+      }
+      if (modal) {
+        modal.style.display = 'none';
+      }
+    }
+
+    function dispararFotoEnVivo() {
+      const video = document.getElementById('cameraVideo');
+      if (!video || !streamEnVivo) return;
+
+      const vw = video.videoWidth || 1280;
+      const vh = video.videoHeight || 720;
+
+      // Escalar proporcionalmente a max 1024px para calidad HD con menos de 2 MB RAM
+      let w = vw;
+      let h = vh;
+      const maxDim = 1024;
+      if (w > maxDim || h > maxDim) {
+        if (w > h) {
+          h = Math.round((h * maxDim) / w);
+          w = maxDim;
+        } else {
+          w = Math.round((w * maxDim) / h);
+          h = maxDim;
+        }
+      }
+
+      const canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, w, h);
+      const fullDataUrl = canvas.toDataURL('image/jpeg', 0.80);
+
+      // Miniatura para interfaz
+      const thumbCanvas = document.createElement('canvas');
+      const tw = 70;
+      const th = Math.round((h * tw) / w);
+      thumbCanvas.width = tw;
+      thumbCanvas.height = th;
+      const tctx = thumbCanvas.getContext('2d');
+      tctx.drawImage(canvas, 0, 0, tw, th);
+      const thumbDataUrl = thumbCanvas.toDataURL('image/jpeg', 0.50);
+
+      cerrarCamaraEnVivo();
+
+      if (window.camaraActivaOrigen === 'bitacora') {
+        bitacoraFotos.push(fullDataUrl);
+        bitacoraThumbs.push(thumbDataUrl);
+        guardarEstadoFormulario();
+        renderPhotoPreviews();
+        showToast(`Foto capturada (${bitacoraFotos.length} en bitácora)`, '📸');
+      } else {
+        window.reciboActualBase64 = fullDataUrl;
+        window.reciboThumbBase64 = thumbDataUrl;
+        const previewBox = document.getElementById('receiptPreviewBox');
+        const previewImg = document.getElementById('receiptPreviewImg');
+        const dropzone = document.getElementById('receiptDropzone');
+        const sizeTag = document.getElementById('receiptSizeTag');
+        if (previewBox && previewImg) {
+          previewImg.src = fullDataUrl;
+          if (sizeTag) {
+            const kb = Math.round(fullDataUrl.length * 0.75 / 1024);
+            sizeTag.innerText = `Comprobante capturado (${kb} KB - Listo para Drive)`;
+          }
+          previewBox.style.display = 'block';
+          if (dropzone) dropzone.style.display = 'none';
+        }
+        guardarEstadoFormulario();
+        showToast('Comprobante capturado con éxito', '🧾');
+      }
+    }
+
     function iniciarCaptura(origen, metodo) {
       window.camaraActivaOrigen = origen;
       guardarEstadoFormulario();
 
       if (metodo === 'camara') {
-        dispararSelectorNativo(origen, 'camara');
+        abrirCamaraEnVivo(origen);
       } else {
         dispararSelectorNativo(origen, 'galeria');
       }
@@ -2423,9 +2555,9 @@
 
   <!-- INPUTS NATIVOS DE BAJO CONSUMO DE RAM (PREVIENE CIERRE DE ANDROID AL TOMAR FOTOS) -->
   <div style="display: none;">
-    <input type="file" id="nativeCameraBitacora" accept="image/*" capture="environment" onchange="handlePhotoCapture(event)">
+    <input type="file" id="nativeCameraBitacora" accept="image/*" onchange="handlePhotoCapture(event)">
     <input type="file" id="nativeGalleryBitacora" accept="image/*" multiple onchange="handlePhotoCapture(event)">
-    <input type="file" id="nativeCameraReceipt" accept="image/*" capture="environment" onchange="handleReceiptCapture(event)">
+    <input type="file" id="nativeCameraReceipt" accept="image/*" onchange="handleReceiptCapture(event)">
     <input type="file" id="nativeGalleryReceipt" accept="image/*" onchange="handleReceiptCapture(event)">
   </div>
 
@@ -2484,6 +2616,34 @@
   </div>
 
   
+
+  <!-- ========================================================================= -->
+  <!-- MODAL: CÁMARA EN VIVO DENTRO DE LA APP (CERO CIERRES DE ANDROID / ZERO-CRASH) -->
+  <!-- ========================================================================= -->
+  <div id="modalCamaraEnVivo" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: #000; z-index: 99999; flex-direction: column;">
+    <!-- Barra Superior -->
+    <div style="position: absolute; top: 0; left: 0; right: 0; padding: 16px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 10; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);">
+      <button type="button" onclick="cerrarCamaraEnVivo()" style="background: rgba(255,255,255,0.2); border: none; color: #fff; width: 42px; height: 42px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center;">✕</button>
+      <div style="text-align: center;">
+        <span style="color: var(--primary-cyan); font-family: var(--font-display); font-size: 0.85rem; font-weight: 800; letter-spacing: 1px;">SICP CÁMARA HD</span>
+        <div style="font-size: 0.65rem; color: #fff; opacity: 0.8;">Apunta y presiona el botón blanco</div>
+      </div>
+      <button type="button" onclick="alternarCamara()" style="background: rgba(255,255,255,0.2); border: none; color: #fff; width: 42px; height: 42px; border-radius: 50%; font-size: 1.3rem; cursor: pointer; display: flex; align-items: center; justify-content: center;" title="Cambiar cámara">🔄</button>
+    </div>
+
+    <!-- Visor de Video en Vivo -->
+    <div style="flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; width: 100%; height: 100%;">
+      <video id="cameraVideo" autoplay playsinline muted style="width: 100%; height: 100%; object-fit: cover;"></video>
+      <div style="position: absolute; width: 85%; height: 65%; border: 1px dashed rgba(0, 240, 255, 0.4); border-radius: 12px; pointer-events: none;"></div>
+    </div>
+
+    <!-- Barra Inferior con Disparador -->
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 25px 20px 35px 20px; display: flex; justify-content: center; align-items: center; background: linear-gradient(to top, rgba(0,0,0,0.85), transparent); z-index: 10;">
+      <button type="button" onclick="dispararFotoEnVivo()" style="width: 74px; height: 74px; border-radius: 50%; background: #ffffff; border: 4px solid var(--primary-cyan); box-shadow: 0 0 25px rgba(0, 240, 255, 0.7); display: flex; align-items: center; justify-content: center; cursor: pointer; outline: none;">
+        <div style="width: 56px; height: 56px; border-radius: 50%; background: var(--primary-cyan);"></div>
+      </button>
+    </div>
+  </div>
 
 </body>
 </html>
